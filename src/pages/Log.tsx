@@ -35,15 +35,16 @@ export default function Log() {
   }, {} as Record<string, typeof meals>);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background pb-20">
-      <div className="container mx-auto p-4 max-w-2xl">
+    <div className="min-h-screen bg-background pb-32 relative">
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-56 bg-[radial-gradient(60%_60%_at_50%_0%,hsl(var(--primary)/0.18),transparent_70%)]" />
+      <div className="container mx-auto p-4 max-w-2xl relative z-10">
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-1">Meal Log</h1>
           <p className="text-muted-foreground">Your nutrition history</p>
         </div>
 
         {meals.length === 0 ? (
-          <Card className="p-8 text-center">
+          <Card className="trading-card p-8 text-center">
             <Calendar className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground mb-2">No meals logged yet</p>
             <p className="text-sm text-muted-foreground">Start scanning meals to build your history</p>
@@ -65,7 +66,7 @@ export default function Log() {
                   </div>
                   <div className="space-y-3">
                     {dateMeals.map((meal) => (
-                      <Card key={meal.id} className="p-4">
+                      <Card key={meal.id} className="trading-card p-4">
                         <div className="flex justify-between items-start">
                           <div>
                             <h3 className="font-semibold mb-1">{meal.name}</h3>
