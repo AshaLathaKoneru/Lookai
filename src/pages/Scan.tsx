@@ -199,13 +199,13 @@ export default function Scan() {
           <div className="space-y-4">
             <div className="glass-panel rounded-[32px] overflow-hidden relative">
               <div className="relative aspect-[3/4]">
-                <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/10 to-background/70" />
-                <div className="absolute inset-0 opacity-50 [background-image:linear-gradient(to_right,hsl(0_0%_100%_/0.05)_1px,transparent_1px),linear-gradient(to_bottom,hsl(0_0%_100%_/0.05)_1px,transparent_1px)] [background-size:42px_42px]" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/40 via-background/10 to-background/70" />
+                <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:linear-gradient(to_right,hsl(0_0%_100%_/0.05)_1px,transparent_1px),linear-gradient(to_bottom,hsl(0_0%_100%_/0.05)_1px,transparent_1px)] [background-size:42px_42px]" />
 
-                <div className="absolute left-6 top-6 h-10 w-10 border-l-2 border-t-2 border-primary/80 rounded-tl-lg" />
-                <div className="absolute right-6 top-6 h-10 w-10 border-r-2 border-t-2 border-primary/80 rounded-tr-lg" />
-                <div className="absolute left-6 bottom-6 h-10 w-10 border-l-2 border-b-2 border-primary/80 rounded-bl-lg" />
-                <div className="absolute right-6 bottom-6 h-10 w-10 border-r-2 border-b-2 border-primary/80 rounded-br-lg" />
+                <div className="pointer-events-none absolute left-6 top-6 h-10 w-10 border-l-2 border-t-2 border-primary/80 rounded-tl-lg" />
+                <div className="pointer-events-none absolute right-6 top-6 h-10 w-10 border-r-2 border-t-2 border-primary/80 rounded-tr-lg" />
+                <div className="pointer-events-none absolute left-6 bottom-6 h-10 w-10 border-l-2 border-b-2 border-primary/80 rounded-bl-lg" />
+                <div className="pointer-events-none absolute right-6 bottom-6 h-10 w-10 border-r-2 border-b-2 border-primary/80 rounded-br-lg" />
 
                 <div className="absolute inset-x-0 bottom-0 p-6">
                   <div className="text-3xl font-bold tracking-tight">Scanning your vibe…</div>
@@ -214,13 +214,19 @@ export default function Scan() {
                   </div>
 
                   <div className="mt-6 flex items-center justify-between">
-                    <div className="glass-panel rounded-full p-2 flex items-center gap-2">
-                      <div className="rounded-full bg-primary/20 px-4 py-2 text-xs font-semibold tracking-wide text-primary">
+                    <div className="glass-panel rounded-full p-1 flex items-center gap-1">
+                      <label
+                        htmlFor="camera-input"
+                        className="cursor-pointer select-none rounded-full bg-primary/20 px-4 py-2 text-xs font-semibold tracking-wide text-primary"
+                      >
                         SCAN
-                      </div>
-                      <div className="px-4 py-2 text-xs font-semibold tracking-wide text-muted-foreground">
+                      </label>
+                      <label
+                        htmlFor="upload-input"
+                        className="cursor-pointer select-none rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-muted-foreground"
+                      >
                         UPLOAD
-                      </div>
+                      </label>
                     </div>
 
                     <div className="glass-panel rounded-full px-4 py-2 text-xs tracking-[0.18em] text-primary">
