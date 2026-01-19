@@ -24,11 +24,15 @@ serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         messages: [
           {
+            role: "system",
+            text: "You are a nutrition analyzer. Return ONLY valid JSON with no markdown formatting, no code blocks, no explanation. Format: {\"name\": \"string\", \"calories\": number, \"protein\": number, \"carbs\": number, \"fats\": number}"
+          },
+          {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Analyze this food image and provide: meal name, calories, protein (g), carbs (g), fats (g). Return JSON only: {name, calories, protein, carbs, fats}"
+                text: "Analyze this food and return nutrition data. Return ONLY the JSON object with: name (string), calories (number), protein in grams (number), carbs in grams (number), fats in grams (number). No markdown, no code blocks, just the JSON."
               },
               {
                 type: "image_url",
@@ -40,8 +44,27 @@ serve(async (req) => {
       }),
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("AI API error:", response.status, errorText);
+      throw new Error(`AI API failed: ${response.status}`);
+    }
+
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    let content = data.choices[0].message.content;
+    
+    // Strip markdown code blocks if present
+    content = content.trim();
+    if (content.startsWith('```')) {
+      // Remove opening ```json or ``` 
+      content = content.replace(/^```(?:json)?\n/, '');
+      // Remove closing ```
+      content = content.replace(/\n```$/, '');
+      content = content.trim();
+    }
+    
+    console.log("Cleaned AI response:", content);
+    
     const parsed = JSON.parse(content);
 
     return new Response(JSON.stringify(parsed), {
