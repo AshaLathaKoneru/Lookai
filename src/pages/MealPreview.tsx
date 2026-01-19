@@ -7,7 +7,6 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
 
 export default function MealPreview() {
   const location = useLocation();
@@ -26,20 +25,20 @@ export default function MealPreview() {
 
   const logMealMutation = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase
-        .from("meals")
-        .insert({
-          user_id: user.id,
-          name: meal.name,
-          calories: meal.calories,
-          protein: meal.protein,
-          carbs: meal.carbs,
-          fats: meal.fats,
-          meal_date: new Date().toISOString().split('T')[0],
-        });
+      const { error } = await supabase.from("meals").insert({
+        user_id: user.id,
+        name: meal.name,
+        calories: meal.calories,
+        protein: meal.protein,
+        carbs: meal.carbs,
+        fats: meal.fats,
+        meal_date: new Date().toISOString().split("T")[0],
+      });
 
       if (error) throw error;
     },
@@ -66,70 +65,94 @@ export default function MealPreview() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background p-4">
-      <div className="container mx-auto max-w-2xl">
+    <div className="min-h-screen bg-background p-4 pb-24 relative overflow-hidden">
+      <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+
+      <div className="container mx-auto max-w-md relative z-10">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">Review Meal</h1>
-          <p className="text-muted-foreground">Adjust the details if needed</p>
+          <h1 className="text-2xl font-bold mb-1">Scan Preview</h1>
+          <p className="text-muted-foreground">Review & tweak before logging</p>
         </div>
 
-        <Card className="p-4 mb-4">
+        <Card className="glass-panel p-4 mb-4 rounded-[28px]">
           {image && (
-            <img
-              src={image}
-              alt="Meal"
-              className="w-full rounded-lg mb-4"
-            />
+            <div className="relative overflow-hidden rounded-[22px]">
+              <img
+                src={image}
+                alt="Meal"
+                className="w-full h-[46vh] object-cover"
+                loading="lazy"
+              />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
+            </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-4 mt-4">
+            <div className="flex items-baseline justify-between">
+              <div className="text-sm text-muted-foreground tracking-[0.2em]">TOTAL</div>
+              <div className="text-4xl font-bold neon-text">
+                {meal.calories}
+                <span className="text-base font-semibold text-muted-foreground ml-1">kcal</span>
+              </div>
+            </div>
+
             <div>
-              <Label htmlFor="name">Meal Name</Label>
+              <Label htmlFor="name">Item</Label>
               <Input
                 id="name"
                 value={meal.name}
                 onChange={(e) => setMeal({ ...meal, name: e.target.value })}
+                className="glass-panel"
               />
             </div>
 
-            <div>
-              <Label htmlFor="calories">Calories (kcal)</Label>
-              <Input
-                id="calories"
-                type="number"
-                value={meal.calories}
-                onChange={(e) => setMeal({ ...meal, calories: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="calories">Calories</Label>
+                <Input
+                  id="calories"
+                  type="number"
+                  value={meal.calories}
+                  onChange={(e) =>
+                    setMeal({ ...meal, calories: parseInt(e.target.value) || 0 })
+                  }
+                  className="glass-panel"
+                />
+              </div>
               <div>
                 <Label htmlFor="protein">Protein (g)</Label>
                 <Input
                   id="protein"
                   type="number"
                   value={meal.protein}
-                  onChange={(e) => setMeal({ ...meal, protein: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setMeal({ ...meal, protein: parseFloat(e.target.value) || 0 })
+                  }
+                  className="glass-panel"
                 />
               </div>
-
               <div>
                 <Label htmlFor="carbs">Carbs (g)</Label>
                 <Input
                   id="carbs"
                   type="number"
                   value={meal.carbs}
-                  onChange={(e) => setMeal({ ...meal, carbs: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setMeal({ ...meal, carbs: parseFloat(e.target.value) || 0 })
+                  }
+                  className="glass-panel"
                 />
               </div>
-
               <div>
                 <Label htmlFor="fats">Fats (g)</Label>
                 <Input
                   id="fats"
                   type="number"
                   value={meal.fats}
-                  onChange={(e) => setMeal({ ...meal, fats: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setMeal({ ...meal, fats: parseFloat(e.target.value) || 0 })
+                  }
+                  className="glass-panel"
                 />
               </div>
             </div>
@@ -140,20 +163,21 @@ export default function MealPreview() {
           <Button
             variant="outline"
             onClick={() => navigate("/scan")}
-            className="flex-1"
+            className="flex-1 glass-panel"
+            disabled={logMealMutation.isPending}
           >
-            Cancel
+            Back
           </Button>
           <Button
             onClick={() => logMealMutation.mutate()}
             disabled={logMealMutation.isPending}
-            className="flex-1"
+            className="flex-1 neon-fab"
           >
             {logMealMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Logging...
-              </>
+              <span className="inline-flex items-center gap-2">
+                <span className="shimmer h-4 w-16 rounded-full" />
+                Logging
+              </span>
             ) : (
               "Log Meal"
             )}

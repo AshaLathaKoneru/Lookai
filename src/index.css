@@ -142,6 +142,18 @@ All colors MUST be HSL.
   .dial-reveal {
     animation: dial-reveal 900ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
   }
+
+  /* Shimmer skeleton (no spinners) */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(0 0% 100% / 0.06),
+      hsl(0 0% 100% / 0.14),
+      hsl(0 0% 100% / 0.06)
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
 }
 
 @keyframes neon-breathe {
@@ -169,4 +181,14 @@ All colors MUST be HSL.
     stroke-dashoffset: var(--dial-to, 0);
   }
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 
