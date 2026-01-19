@@ -2,13 +2,15 @@ import { useState } from "react";
 import { MobileNav } from "@/components/MobileNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, Upload, Loader2 } from "lucide-react";
+import { Camera, Upload, Loader2, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Scan() {
+  const isMobile = useIsMobile();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -54,14 +56,26 @@ export default function Scan() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    // Reset input so selecting the same photo again still triggers onChange (common on mobile)
+    e.target.value = "";
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Unsupported file",
+        description: "Please select an image.",
+        variant: "destructive",
+      });
+      return;
     }
+
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const analyzeMutation = useMutation({
@@ -125,11 +139,27 @@ export default function Scan() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-1">Scan Meal</h1>
           <p className="text-muted-foreground">
-            {profile?.is_premium 
-              ? "Unlimited scans" 
-              : `${5 - (todayUsage?.scan_count || 0)} scans remaining today`}
+            {profile?.is_premium ? "Unlimited scans" : `${5 - (todayUsage?.scan_count || 0)} scans remaining today`}
           </p>
         </div>
+
+        {isMobile && (
+          <Card className="p-4 mb-4">
+            <div className="flex gap-3">
+              <div className="mt-0.5">
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <p className="mb-1">
+                  If the camera doesn’t open, use <span className="font-medium">Upload Photo</span> and pick <span className="font-medium">Camera</span> from your gallery options.
+                </p>
+                <p>
+                  If you previously blocked access, enable camera permission for your browser in your phone settings.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {!canScan && (
           <Card className="p-4 mb-4 border-warning bg-warning/5">
@@ -196,6 +226,7 @@ export default function Scan() {
               <img
                 src={preview}
                 alt="Meal preview"
+                loading="lazy"
                 className="w-full rounded-lg mb-4"
               />
               <div className="flex gap-2">
