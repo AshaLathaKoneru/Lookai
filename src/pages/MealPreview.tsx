@@ -65,8 +65,8 @@ export default function MealPreview() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-24 relative overflow-hidden">
-      <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+    <div className="min-h-screen bg-background p-4 pb-32 relative overflow-hidden">
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-56 bg-[radial-gradient(60%_60%_at_50%_0%,hsl(var(--primary)/0.18),transparent_70%)]" />
 
       <div className="container mx-auto max-w-md relative z-10">
         <div className="mb-6">
@@ -74,7 +74,7 @@ export default function MealPreview() {
           <p className="text-muted-foreground">Review & tweak before logging</p>
         </div>
 
-        <Card className="glass-panel p-4 mb-4 rounded-[28px]">
+        <Card className="trading-card p-4 mb-4 rounded-[32px]">
           {image && (
             <div className="relative overflow-hidden rounded-[22px]">
               <img
@@ -179,7 +179,7 @@ export default function MealPreview() {
                 Logging
               </span>
             ) : (
-              "Log Meal"
+              "LOG MEAL"
             )}
           </Button>
         </div>

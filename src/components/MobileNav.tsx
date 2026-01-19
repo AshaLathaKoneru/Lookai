@@ -3,8 +3,10 @@ import { NavLink } from "./NavLink";
 
 export const MobileNav = () => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/60 backdrop-blur-xl">
-      <div className="flex justify-around items-center h-16 px-4">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/30 backdrop-blur-2xl">
+      <div className="mx-auto max-w-2xl px-3 pb-3">
+        <div className="glass-panel rounded-[28px]">
+          <div className="flex justify-around items-center h-16 px-4">
         <NavLink
           to="/"
           className="flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
@@ -51,6 +53,8 @@ export const MobileNav = () => {
           <User className="h-5 w-5" />
           <span className="text-xs font-medium">Profile</span>
         </NavLink>
+          </div>
+        </div>
       </div>
     </nav>
   );

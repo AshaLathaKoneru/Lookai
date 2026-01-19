@@ -154,6 +154,33 @@ All colors MUST be HSL.
     background-size: 200% 100%;
     animation: shimmer 1.4s ease-in-out infinite;
   }
+
+  /* Figma-style pills */
+  .chip {
+    @apply glass-panel inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs tracking-[0.18em];
+  }
+
+  /* Trading-card widgets */
+  .trading-card {
+    @apply glass-panel rounded-[28px];
+    box-shadow:
+      0 26px 80px -46px hsl(var(--primary) / 0.45),
+      inset 0 1px 0 hsl(0 0% 100% / 0.08);
+  }
+
+  /* Holographic premium surface */
+  .holo-card {
+    @apply glass-panel rounded-[32px];
+    background:
+      radial-gradient(120% 120% at 10% 0%, hsl(var(--primary) / 0.20), transparent 55%),
+      radial-gradient(120% 120% at 90% 30%, hsl(var(--warning) / 0.14), transparent 55%),
+      linear-gradient(180deg, hsl(0 0% 100% / 0.06), hsl(0 0% 100% / 0.02));
+  }
+
+  /* Press feel (apply to clickable blocks) */
+  .pressable {
+    @apply transition-transform duration-150 active:scale-[0.98];
+  }
 }
 
 @keyframes neon-breathe {

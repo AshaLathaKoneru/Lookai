@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Crown, LogOut, User as UserIcon } from "lucide-react";
+import { Crown, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
@@ -75,23 +75,25 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background pb-20">
-      <div className="container mx-auto p-4 max-w-2xl">
+    <div className="min-h-screen bg-background pb-32 relative">
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-56 bg-[radial-gradient(60%_60%_at_50%_0%,hsl(var(--primary)/0.18),transparent_70%)]" />
+      <div className="container mx-auto p-4 max-w-2xl relative z-10">
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-1">Profile</h1>
           <p className="text-muted-foreground">Manage your account</p>
         </div>
 
         {profile?.is_premium && (
-          <Card className="p-4 mb-4 bg-gradient-to-r from-warning/10 to-primary/10 border-warning/20">
+          <Card className="holo-card p-4 mb-4">
             <div className="flex items-center gap-2">
               <Crown className="h-5 w-5 text-warning" />
-              <span className="font-semibold">Premium Member</span>
+              <span className="font-semibold tracking-tight">Premium Member</span>
+              <span className="ml-auto chip text-primary">UNLOCKED</span>
             </div>
           </Card>
         )}
 
-        <Card className="p-6 mb-4">
+        <Card className="trading-card p-6 mb-4">
           <div className="space-y-4">
             <div>
               <Label htmlFor="name">Name</Label>
@@ -100,6 +102,7 @@ export default function Profile() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your name"
+                className="glass-panel"
               />
             </div>
 
@@ -109,7 +112,7 @@ export default function Profile() {
                 id="email"
                 value={profile?.email || ""}
                 disabled
-                className="bg-muted"
+                className="glass-panel opacity-70"
               />
             </div>
 
@@ -128,7 +131,7 @@ export default function Profile() {
                 value={calorieGoal}
                 onChange={(e) => setCalorieGoal(parseInt(e.target.value) || 2000)}
                 disabled={!profile?.is_premium}
-                className={!profile?.is_premium ? "bg-muted" : ""}
+                className={!profile?.is_premium ? "glass-panel opacity-60" : "glass-panel"}
               />
               {!profile?.is_premium && (
                 <p className="text-xs text-muted-foreground mt-1">
@@ -140,7 +143,7 @@ export default function Profile() {
             <Button
               onClick={() => updateProfileMutation.mutate()}
               disabled={updateProfileMutation.isPending}
-              className="w-full"
+              className="w-full neon-fab"
             >
               Save Changes
             </Button>
@@ -148,7 +151,7 @@ export default function Profile() {
         </Card>
 
         {!profile?.is_premium && (
-          <Card className="p-6 mb-4">
+          <Card className="holo-card p-6 mb-4">
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-4">
                 <Crown className="h-8 w-8 text-warning" />
@@ -158,19 +161,13 @@ export default function Profile() {
                 Unlock unlimited scans, custom goals, and weekly insights
               </p>
               <div className="text-2xl font-bold mb-4">₹49/month</div>
-              <Button className="w-full">
-                Upgrade Now
-              </Button>
+              <Button className="w-full neon-fab">Upgrade Now</Button>
             </div>
           </Card>
         )}
 
-        <Card className="p-6">
-          <Button
-            variant="outline"
-            onClick={handleSignOut}
-            className="w-full"
-          >
+        <Card className="trading-card p-6">
+          <Button variant="outline" onClick={handleSignOut} className="w-full glass-panel">
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
           </Button>

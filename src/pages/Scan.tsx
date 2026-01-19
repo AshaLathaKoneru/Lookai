@@ -1,21 +1,28 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MobileNav } from "@/components/MobileNav";
 import { CameraPermissionHelpDialog } from "@/components/CameraPermissionHelpDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, HelpCircle, Info, Upload, Zap } from "lucide-react";
+import { Camera, ExternalLink, HelpCircle, Info, Upload, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useInIframe } from "@/hooks/use-in-iframe";
 
 export default function Scan() {
   const isMobile = useIsMobile();
+  const inIframe = useInIframe();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [permissionHelpOpen, setPermissionHelpOpen] = useState(false);
+  const [pickerArmed, setPickerArmed] = useState<null | "camera" | "upload">(null);
+
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -69,6 +76,8 @@ export default function Scan() {
     // Reset input so selecting the same photo again still triggers onChange (common on mobile)
     e.target.value = "";
 
+    setPickerArmed(null);
+
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -87,6 +96,28 @@ export default function Scan() {
     };
     reader.readAsDataURL(file);
   };
+
+  const openCameraPicker = () => {
+    setPickerArmed("camera");
+    cameraInputRef.current?.click();
+  };
+
+  const openUploadPicker = () => {
+    setPickerArmed("upload");
+    uploadInputRef.current?.click();
+  };
+
+  useEffect(() => {
+    if (!pickerArmed) return;
+
+    // In some environments (notably sandboxed iframes), camera/file pickers may be blocked.
+    // If the user tapped and we never receive a change event shortly after, show help.
+    const t = window.setTimeout(() => {
+      if (pickerArmed) setPermissionHelpOpen(true);
+    }, 900);
+
+    return () => window.clearTimeout(t);
+  }, [pickerArmed]);
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
@@ -186,21 +217,38 @@ export default function Scan() {
           </div>
         </header>
 
-        {isMobile && (
+        {(isMobile || inIframe) && (
           <Card className="glass-panel p-4 mb-4">
             <div className="flex gap-3">
               <div className="mt-0.5">
                 <Info className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="text-sm text-muted-foreground">
-                <p className="mb-1">
-                  If the camera doesn’t open, use{" "}
-                  <span className="font-medium text-foreground">Upload</span> and pick{" "}
-                  <span className="font-medium text-foreground">Camera</span> from your gallery options.
-                </p>
-                <p>
-                  If you previously blocked access, enable camera permission for your browser in your phone settings.
-                </p>
+                {inIframe ? (
+                  <>
+                    <p className="mb-2">
+                      Camera & file pickers are often blocked inside the preview iframe.
+                      Open Scan in a new tab to test the camera.
+                    </p>
+                    <Button asChild variant="outline" className="glass-panel rounded-full h-9 px-4">
+                      <a href="/scan" target="_blank" rel="noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                        Open Scan in new tab
+                      </a>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="mb-1">
+                      If the camera doesn’t open, use{" "}
+                      <span className="font-medium text-foreground">Upload</span> and pick{" "}
+                      <span className="font-medium text-foreground">Camera</span> from your gallery options.
+                    </p>
+                    <p>
+                      If you previously blocked access, enable camera permission for your browser in your phone settings.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </Card>
@@ -234,18 +282,24 @@ export default function Scan() {
 
                   <div className="mt-6 flex items-center justify-between">
                     <div className="glass-panel rounded-full p-1 flex items-center gap-1">
-                      <label
-                        htmlFor="camera-input"
-                        className="cursor-pointer select-none rounded-full bg-primary/20 px-4 py-2 text-xs font-semibold tracking-wide text-primary"
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={openCameraPicker}
+                        disabled={!canScan}
+                        className="h-9 rounded-full bg-primary/20 px-4 text-xs font-semibold tracking-wide text-primary hover:bg-primary/25"
                       >
                         SCAN
-                      </label>
-                      <label
-                        htmlFor="upload-input"
-                        className="cursor-pointer select-none rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-muted-foreground"
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={openUploadPicker}
+                        disabled={!canScan}
+                        className="h-9 rounded-full px-4 text-xs font-semibold tracking-wide text-muted-foreground hover:bg-accent/40"
                       >
                         UPLOAD
-                      </label>
+                      </Button>
                     </div>
 
                     <div className="glass-panel rounded-full px-4 py-2 text-xs tracking-[0.18em] text-primary">
@@ -256,6 +310,7 @@ export default function Scan() {
               </div>
 
               <input
+                ref={cameraInputRef}
                 type="file"
                 accept="image/*"
                 capture="environment"
@@ -265,6 +320,7 @@ export default function Scan() {
                 disabled={!canScan}
               />
               <input
+                ref={uploadInputRef}
                 type="file"
                 accept="image/*"
                 onChange={handleFileSelect}
@@ -275,20 +331,26 @@ export default function Scan() {
             </div>
 
             <div className="flex items-center justify-center gap-6 pt-2">
-              <Button asChild disabled={!canScan} className="h-20 w-20 rounded-full p-0 neon-fab">
-                <label
-                  htmlFor="camera-input"
-                  className="cursor-pointer h-full w-full flex items-center justify-center"
-                >
-                  <Camera className="h-7 w-7" />
-                </label>
+              <Button
+                type="button"
+                disabled={!canScan}
+                onClick={openCameraPicker}
+                className="h-20 w-20 rounded-full p-0 neon-fab"
+                aria-label="Open camera"
+              >
+                <Camera className="h-7 w-7" />
               </Button>
 
-              <Button variant="outline" asChild disabled={!canScan} className="h-14 rounded-full px-6 glass-panel">
-                <label htmlFor="upload-input" className="cursor-pointer flex items-center gap-2">
-                  <Upload className="h-4 w-4" />
-                  Upload
-                </label>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!canScan}
+                onClick={openUploadPicker}
+                className="h-14 rounded-full px-6 glass-panel"
+                aria-label="Upload a photo"
+              >
+                <Upload className="h-4 w-4" />
+                Upload
               </Button>
             </div>
           </div>

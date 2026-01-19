@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { format } from "date-fns";
-import { Flame, Beef, Wheat, Droplets, Sparkles } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { Flame, Beef, Wheat, Droplets, Sparkles, Utensils } from "lucide-react";
 import { MobileNav } from "@/components/MobileNav";
 import { Link } from "react-router-dom";
 
@@ -51,31 +51,37 @@ export default function Home() {
   const calorieProgress = (totalCalories / calorieGoal) * 100;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32 relative">
       {/* subtle top glow */}
       <div className="pointer-events-none fixed inset-x-0 top-0 h-56 bg-[radial-gradient(60%_60%_at_50%_0%,hsl(var(--primary)/0.22),transparent_70%)]" />
 
       <div className="container mx-auto p-4 max-w-2xl">
         <header className="mb-6 flex items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Hello, <span className="neon-text">{profile?.name || "there"}</span>
-            </h1>
-            <p className="text-sm text-muted-foreground">{format(new Date(), "EEEE, MMM d")}</p>
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-full glass-panel flex items-center justify-center">
+              <Flame className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <div className="text-[10px] tracking-[0.22em] text-muted-foreground">HELLO</div>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                <span className="neon-text">{profile?.name || "there"}</span>
+              </h1>
+              <p className="text-xs text-muted-foreground">{format(new Date(), "EEEE, MMM d")}</p>
+            </div>
           </div>
 
           <Link
             to="/scan"
-            className="glass-panel inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs text-foreground"
+            className="chip pressable"
             aria-label="Scan a meal"
           >
             <Sparkles className="h-4 w-4 text-primary" />
-            <span>Scan</span>
+            <span>SCAN</span>
           </Link>
         </header>
 
         {/* Calorie Dial */}
-        <Card className="glass-panel p-6 mb-6">
+        <Card className="trading-card p-6 mb-6">
           <div className="flex items-center justify-center">
             <div className="relative w-64 h-64">
               {(() => {
@@ -137,20 +143,20 @@ export default function Home() {
         {/* Bento Macros */}
         <section className="mb-6">
           <div className="grid grid-cols-3 gap-3">
-            <Card className="glass-panel p-4">
+            <Card className="trading-card p-4">
               <Beef className="h-5 w-5 text-primary mb-2" />
               <div className="text-2xl font-semibold tracking-tight">{totalProtein.toFixed(0)}g</div>
-              <div className="text-xs text-muted-foreground">Protein</div>
+              <div className="text-[11px] tracking-[0.18em] text-muted-foreground">PROTEIN</div>
             </Card>
-            <Card className="glass-panel p-4">
+            <Card className="trading-card p-4">
               <Wheat className="h-5 w-5 text-warning mb-2" />
               <div className="text-2xl font-semibold tracking-tight">{totalCarbs.toFixed(0)}g</div>
-              <div className="text-xs text-muted-foreground">Carbs</div>
+              <div className="text-[11px] tracking-[0.18em] text-muted-foreground">CARBS</div>
             </Card>
-            <Card className="glass-panel p-4">
+            <Card className="trading-card p-4">
               <Droplets className="h-5 w-5 text-info mb-2" />
               <div className="text-2xl font-semibold tracking-tight">{totalFats.toFixed(0)}g</div>
-              <div className="text-xs text-muted-foreground">Fats</div>
+              <div className="text-[11px] tracking-[0.18em] text-muted-foreground">FATS</div>
             </Card>
           </div>
         </section>
@@ -163,31 +169,54 @@ export default function Home() {
           </div>
 
           {todayMeals.length === 0 ? (
-            <Card className="glass-panel p-6 text-center">
+            <Card className="trading-card p-6 text-center">
               <p className="text-muted-foreground mb-1">No meals logged yet</p>
-              <p className="text-sm text-muted-foreground">Tap Scan to log your first meal.</p>
+              <p className="text-sm text-muted-foreground">Tap AI SCAN to log your first meal.</p>
             </Card>
           ) : (
             <div className="space-y-3">
-              {todayMeals.map((meal) => (
-                <Card key={meal.id} className="glass-panel p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <h3 className="font-semibold tracking-tight truncate">{meal.name}</h3>
-                      <p className="text-sm text-muted-foreground">{meal.calories} kcal</p>
-                    </div>
+              {todayMeals.map((meal) => {
+                const time = meal.created_at ? format(parseISO(meal.created_at), "p") : "";
+                return (
+                  <Card key={meal.id} className="trading-card p-4 pressable">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full glass-panel flex items-center justify-center">
+                        <Utensils className="h-4 w-4 text-primary" />
+                      </div>
 
-                    <div className="text-right text-xs text-muted-foreground whitespace-nowrap">
-                      <div>P {Number(meal.protein).toFixed(0)}g</div>
-                      <div>C {Number(meal.carbs).toFixed(0)}g</div>
-                      <div>F {Number(meal.fats).toFixed(0)}g</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold tracking-tight truncate">{meal.name}</h3>
+                          {time && <span className="chip text-muted-foreground">{time}</span>}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{meal.calories} kcal</p>
+                      </div>
+
+                      <div className="text-right text-xs text-muted-foreground whitespace-nowrap">
+                        <div>P {Number(meal.protein).toFixed(0)}g</div>
+                        <div>C {Number(meal.carbs).toFixed(0)}g</div>
+                        <div>F {Number(meal.fats).toFixed(0)}g</div>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
           )}
         </section>
+      </div>
+
+      {/* AI SCAN primary CTA */}
+      <div className="fixed inset-x-0 bottom-20 z-40">
+        <div className="mx-auto max-w-2xl px-4">
+          <Link
+            to="/scan"
+            className="neon-fab pressable flex h-14 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold tracking-[0.14em]"
+            aria-label="AI scan"
+          >
+            AI SCAN
+          </Link>
+        </div>
       </div>
 
       <MobileNav />
