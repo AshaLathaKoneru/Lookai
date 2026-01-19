@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      meals: {
+        Row: {
+          calories: number
+          carbs: number | null
+          created_at: string | null
+          fats: number | null
+          id: string
+          image_url: string | null
+          meal_date: string | null
+          name: string
+          protein: number | null
+          user_id: string
+        }
+        Insert: {
+          calories: number
+          carbs?: number | null
+          created_at?: string | null
+          fats?: number | null
+          id?: string
+          image_url?: string | null
+          meal_date?: string | null
+          name: string
+          protein?: number | null
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          carbs?: number | null
+          created_at?: string | null
+          fats?: number | null
+          id?: string
+          image_url?: string | null
+          meal_date?: string | null
+          name?: string
+          protein?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          calorie_goal: number | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_premium: boolean | null
+          name: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          calorie_goal?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_premium?: boolean | null
+          name?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          calorie_goal?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_premium?: boolean | null
+          name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scan_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          scan_count: number | null
+          scan_date: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          scan_count?: number | null
+          scan_date?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          scan_count?: number | null
+          scan_date?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
