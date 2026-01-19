@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MobileNav } from "@/components/MobileNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, Upload, Loader2, Info } from "lucide-react";
+import { Camera, Info, Upload, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -21,15 +21,17 @@ export default function Scan() {
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      
+
       const { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", user.id)
         .single();
-      
+
       return data;
     },
   });
@@ -37,22 +39,28 @@ export default function Scan() {
   const { data: todayUsage } = useQuery({
     queryKey: ["scan-usage", "today"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      
-      const today = new Date().toISOString().split('T')[0];
+
+      const today = new Date().toISOString().split("T")[0];
       const { data } = await supabase
         .from("scan_usage")
         .select("*")
         .eq("user_id", user.id)
         .eq("scan_date", today)
         .maybeSingle();
-      
+
       return data;
     },
   });
 
   const canScan = profile?.is_premium || (todayUsage?.scan_count || 0) < 5;
+  const scansLeft = useMemo(
+    () => Math.max(0, 5 - (todayUsage?.scan_count || 0)),
+    [todayUsage?.scan_count]
+  );
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,14 +92,16 @@ export default function Scan() {
       if (!canScan) throw new Error("Daily scan limit reached");
 
       setAnalyzing(true);
-      
+
       // Increment scan usage
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      
-      const today = new Date().toISOString().split('T')[0];
+
+      const today = new Date().toISOString().split("T")[0];
       const currentCount = todayUsage?.scan_count || 0;
-      
+
       if (todayUsage) {
         await supabase
           .from("scan_usage")
@@ -104,7 +114,7 @@ export default function Scan() {
           .insert({ user_id: user.id, scan_date: today, scan_count: 1 });
       }
 
-      // Call AI analysis edge function
+      // Call AI analysis function
       const base64 = preview?.split(",")[1];
       const { data, error } = await supabase.functions.invoke("analyze-meal", {
         body: { image: base64 },
@@ -134,24 +144,40 @@ export default function Scan() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background pb-20">
-      <div className="container mx-auto p-4 max-w-2xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">Scan Meal</h1>
-          <p className="text-muted-foreground">
-            {profile?.is_premium ? "Unlimited scans" : `${5 - (todayUsage?.scan_count || 0)} scans remaining today`}
-          </p>
-        </div>
+    <div className="min-h-screen bg-background pb-24 relative overflow-hidden">
+      <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+
+      <div className="container mx-auto p-4 max-w-md relative z-10">
+        <header className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-10 rounded-full glass-panel flex items-center justify-center">
+              <Zap className="h-4 w-4 text-primary" />
+            </div>
+            <div className="leading-tight">
+              <div className="text-[11px] tracking-[0.18em] text-muted-foreground">SCAN</div>
+              <div className="text-sm font-semibold">LooKai</div>
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-full px-4 py-2 flex items-center gap-2">
+            <span className="inline-flex h-2 w-2 rounded-full bg-primary" />
+            <span className="text-xs tracking-wide">
+              {profile?.is_premium ? "UNLIMITED" : `${scansLeft} LEFT`}
+            </span>
+          </div>
+        </header>
 
         {isMobile && (
-          <Card className="p-4 mb-4">
+          <Card className="glass-panel p-4 mb-4">
             <div className="flex gap-3">
               <div className="mt-0.5">
                 <Info className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="text-sm text-muted-foreground">
                 <p className="mb-1">
-                  If the camera doesn’t open, use <span className="font-medium">Upload Photo</span> and pick <span className="font-medium">Camera</span> from your gallery options.
+                  If the camera doesn’t open, use{" "}
+                  <span className="font-medium text-foreground">Upload</span> and pick{" "}
+                  <span className="font-medium text-foreground">Camera</span> from your gallery options.
                 </p>
                 <p>
                   If you previously blocked access, enable camera permission for your browser in your phone settings.
@@ -162,7 +188,7 @@ export default function Scan() {
         )}
 
         {!canScan && (
-          <Card className="p-4 mb-4 border-warning bg-warning/5">
+          <Card className="glass-panel p-4 mb-4 border-warning">
             <p className="text-sm text-warning">
               Daily scan limit reached. Upgrade to Premium for unlimited scans!
             </p>
@@ -171,94 +197,146 @@ export default function Scan() {
 
         {!preview ? (
           <div className="space-y-4">
-            <Card className="p-8 border-2 border-dashed">
-              <div className="text-center">
-                <Camera className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">Take a Photo</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Point your camera at your meal
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="camera-input"
-                  disabled={!canScan}
-                />
-                <Button asChild disabled={!canScan}>
-                  <label htmlFor="camera-input" className="cursor-pointer">
-                    <Camera className="mr-2 h-4 w-4" />
-                    Open Camera
-                  </label>
-                </Button>
-              </div>
-            </Card>
+            <div className="glass-panel rounded-[32px] overflow-hidden relative">
+              <div className="relative aspect-[3/4]">
+                <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/10 to-background/70" />
+                <div className="absolute inset-0 opacity-50 [background-image:linear-gradient(to_right,hsl(0_0%_100%_/0.05)_1px,transparent_1px),linear-gradient(to_bottom,hsl(0_0%_100%_/0.05)_1px,transparent_1px)] [background-size:42px_42px]" />
 
-            <Card className="p-8 border-2 border-dashed">
-              <div className="text-center">
-                <Upload className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">Upload Photo</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Select an image from your gallery
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="upload-input"
-                  disabled={!canScan}
-                />
-                <Button variant="outline" asChild disabled={!canScan}>
-                  <label htmlFor="upload-input" className="cursor-pointer">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Choose File
-                  </label>
-                </Button>
+                <div className="absolute left-6 top-6 h-10 w-10 border-l-2 border-t-2 border-primary/80 rounded-tl-lg" />
+                <div className="absolute right-6 top-6 h-10 w-10 border-r-2 border-t-2 border-primary/80 rounded-tr-lg" />
+                <div className="absolute left-6 bottom-6 h-10 w-10 border-l-2 border-b-2 border-primary/80 rounded-bl-lg" />
+                <div className="absolute right-6 bottom-6 h-10 w-10 border-r-2 border-b-2 border-primary/80 rounded-br-lg" />
+
+                <div className="absolute inset-x-0 bottom-0 p-6">
+                  <div className="text-3xl font-bold tracking-tight">Scanning your vibe…</div>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    Hold steady specifically on the food item.
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="glass-panel rounded-full p-2 flex items-center gap-2">
+                      <div className="rounded-full bg-primary/20 px-4 py-2 text-xs font-semibold tracking-wide text-primary">
+                        SCAN
+                      </div>
+                      <div className="px-4 py-2 text-xs font-semibold tracking-wide text-muted-foreground">
+                        UPLOAD
+                      </div>
+                    </div>
+
+                    <div className="glass-panel rounded-full px-4 py-2 text-xs tracking-[0.18em] text-primary">
+                      READY
+                    </div>
+                  </div>
+                </div>
               </div>
-            </Card>
+
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="camera-input"
+                disabled={!canScan}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="upload-input"
+                disabled={!canScan}
+              />
+            </div>
+
+            <div className="flex items-center justify-center gap-6 pt-2">
+              <Button asChild disabled={!canScan} className="h-20 w-20 rounded-full p-0 neon-fab">
+                <label
+                  htmlFor="camera-input"
+                  className="cursor-pointer h-full w-full flex items-center justify-center"
+                >
+                  <Camera className="h-7 w-7" />
+                </label>
+              </Button>
+
+              <Button variant="outline" asChild disabled={!canScan} className="h-14 rounded-full px-6 glass-panel">
+                <label htmlFor="upload-input" className="cursor-pointer flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Upload
+                </label>
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <Card className="p-4">
-              <img
-                src={preview}
-                alt="Meal preview"
-                loading="lazy"
-                className="w-full rounded-lg mb-4"
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    setPreview(null);
-                    setSelectedImage(null);
-                  }}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Retake
-                </Button>
-                <Button
-                  onClick={() => analyzeMutation.mutate()}
-                  disabled={analyzing}
-                  className="flex-1"
-                >
-                  {analyzing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    "Analyze Meal"
-                  )}
-                </Button>
+            <div className="glass-panel rounded-[32px] overflow-hidden relative">
+              <div className="relative">
+                <img
+                  src={preview}
+                  alt="Meal preview"
+                  loading="lazy"
+                  className="w-full h-[52vh] object-cover"
+                />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
+
+                {analyzing && (
+                  <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center px-6 text-center">
+                    <div className="text-4xl font-bold tracking-[0.14em] text-foreground/70">
+                      ANALYZING VIBES…
+                    </div>
+                    <div className="mt-2 text-xs tracking-[0.22em] text-muted-foreground">
+                      AI PROCESSING // NEURAL NET ACTIVE
+                    </div>
+
+                    <div className="mt-8 w-full max-w-sm space-y-3">
+                      <div className="glass-panel rounded-2xl p-4">
+                        <div className="shimmer h-3 w-2/3 rounded-full" />
+                        <div className="mt-3 shimmer h-3 w-1/2 rounded-full" />
+                      </div>
+                      <div className="glass-panel rounded-2xl p-4">
+                        <div className="shimmer h-3 w-3/4 rounded-full" />
+                        <div className="mt-3 shimmer h-3 w-1/3 rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </Card>
+
+              <div className="p-4">
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      setPreview(null);
+                      setSelectedImage(null);
+                    }}
+                    variant="outline"
+                    className="flex-1 glass-panel"
+                    disabled={analyzing}
+                  >
+                    Retake
+                  </Button>
+
+                  <Button
+                    onClick={() => analyzeMutation.mutate()}
+                    disabled={analyzing}
+                    className="flex-1 neon-fab"
+                  >
+                    {analyzing ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="shimmer h-4 w-16 rounded-full" />
+                        Analyzing
+                      </span>
+                    ) : (
+                      "Analyze Meal"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
+
       <MobileNav />
     </div>
   );
