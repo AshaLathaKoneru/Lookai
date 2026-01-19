@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { MobileNav } from "@/components/MobileNav";
+import { CameraPermissionHelpDialog } from "@/components/CameraPermissionHelpDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, Info, Upload, Zap } from "lucide-react";
+import { Camera, HelpCircle, Info, Upload, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +15,7 @@ export default function Scan() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [permissionHelpOpen, setPermissionHelpOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -147,6 +149,11 @@ export default function Scan() {
     <div className="min-h-screen bg-background pb-24 relative overflow-hidden">
       <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
 
+      <CameraPermissionHelpDialog
+        open={permissionHelpOpen}
+        onOpenChange={setPermissionHelpOpen}
+      />
+
       <div className="container mx-auto p-4 max-w-md relative z-10">
         <header className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -159,11 +166,23 @@ export default function Scan() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-full px-4 py-2 flex items-center gap-2">
-            <span className="inline-flex h-2 w-2 rounded-full bg-primary" />
-            <span className="text-xs tracking-wide">
-              {profile?.is_premium ? "UNLIMITED" : `${scansLeft} LEFT`}
-            </span>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="glass-panel h-10 w-10 rounded-full p-0"
+              onClick={() => setPermissionHelpOpen(true)}
+              aria-label="Camera permission help"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+
+            <div className="glass-panel rounded-full px-4 py-2 flex items-center gap-2">
+              <span className="inline-flex h-2 w-2 rounded-full bg-primary" />
+              <span className="text-xs tracking-wide">
+                {profile?.is_premium ? "UNLIMITED" : `${scansLeft} LEFT`}
+              </span>
+            </div>
           </div>
         </header>
 
