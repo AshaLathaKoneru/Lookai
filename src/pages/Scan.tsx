@@ -107,15 +107,10 @@ export default function Scan() {
     uploadInputRef.current?.click();
   };
 
+  // Reset picker armed state after a short delay (no auto-popup)
   useEffect(() => {
     if (!pickerArmed) return;
-
-    // In some environments (notably sandboxed iframes), camera/file pickers may be blocked.
-    // If the user tapped and we never receive a change event shortly after, show help.
-    const t = window.setTimeout(() => {
-      if (pickerArmed) setPermissionHelpOpen(true);
-    }, 900);
-
+    const t = window.setTimeout(() => setPickerArmed(null), 2000);
     return () => window.clearTimeout(t);
   }, [pickerArmed]);
 
