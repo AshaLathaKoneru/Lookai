@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MobileNav } from "@/components/MobileNav";
 import { CameraPermissionHelpDialog } from "@/components/CameraPermissionHelpDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -406,7 +405,6 @@ export default function Scan() {
         </div>
       )}
 
-      <MobileNav />
     </div>
   );
 }
