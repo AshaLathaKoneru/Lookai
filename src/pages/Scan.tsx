@@ -3,21 +3,18 @@ import { MobileNav } from "@/components/MobileNav";
 import { CameraPermissionHelpDialog } from "@/components/CameraPermissionHelpDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, ExternalLink, HelpCircle, Info, Upload, Zap } from "lucide-react";
+import { Camera, Settings, X, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useInIframe } from "@/hooks/use-in-iframe";
 
 export default function Scan() {
-  const isMobile = useIsMobile();
-  const inIframe = useInIframe();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [permissionHelpOpen, setPermissionHelpOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"scan" | "upload">("scan");
   const [pickerArmed, setPickerArmed] = useState<null | "camera" | "upload">(null);
 
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -73,9 +70,7 @@ export default function Scan() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    // Reset input so selecting the same photo again still triggers onChange (common on mobile)
     e.target.value = "";
-
     setPickerArmed(null);
 
     if (!file) return;
@@ -107,7 +102,6 @@ export default function Scan() {
     uploadInputRef.current?.click();
   };
 
-  // Reset picker armed state after a short delay (no auto-popup)
   useEffect(() => {
     if (!pickerArmed) return;
     const t = window.setTimeout(() => setPickerArmed(null), 2000);
@@ -121,7 +115,6 @@ export default function Scan() {
 
       setAnalyzing(true);
 
-      // Increment scan usage
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -142,7 +135,6 @@ export default function Scan() {
           .insert({ user_id: user.id, scan_date: today, scan_count: 1 });
       }
 
-      // Call AI analysis function
       const base64 = preview?.split(",")[1];
       const { data, error } = await supabase.functions.invoke("analyze-meal", {
         body: { image: base64 },
@@ -172,216 +164,247 @@ export default function Scan() {
   });
 
   return (
-    <div className="min-h-screen bg-background pb-24 relative overflow-hidden">
-      <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
-
+    <div className="min-h-screen bg-background flex flex-col">
       <CameraPermissionHelpDialog
         open={permissionHelpOpen}
         onOpenChange={setPermissionHelpOpen}
       />
 
-      <div className="container mx-auto p-4 max-w-md relative z-10">
-        <header className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-full glass-panel flex items-center justify-center">
-              <Zap className="h-4 w-4 text-primary" />
-            </div>
-            <div className="leading-tight">
-              <div className="text-[11px] tracking-[0.18em] text-muted-foreground">SCAN</div>
-              <div className="text-sm font-semibold">LooKai</div>
-            </div>
-          </div>
+      {/* Hidden file inputs */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileSelect}
+        className="hidden"
+        disabled={!canScan}
+      />
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+        disabled={!canScan}
+      />
 
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="glass-panel h-10 w-10 rounded-full p-0"
-              onClick={() => setPermissionHelpOpen(true)}
-              aria-label="Camera permission help"
+      {!preview ? (
+        /* ============ SCAN VIEW ============ */
+        <div className="flex-1 flex flex-col relative">
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-12 pb-4">
+            <button
+              onClick={() => navigate("/")}
+              className="w-12 h-12 rounded-full bg-muted/80 backdrop-blur-md flex items-center justify-center pressable"
             >
-              <HelpCircle className="h-4 w-4" />
-            </Button>
-
-            <div className="glass-panel rounded-full px-4 py-2 flex items-center gap-2">
-              <span className="inline-flex h-2 w-2 rounded-full bg-primary" />
-              <span className="text-xs tracking-wide">
-                {profile?.is_premium ? "UNLIMITED" : `${scansLeft} LEFT`}
-              </span>
-            </div>
+              <X className="w-5 h-5 text-foreground" />
+            </button>
+            <button className="w-12 h-12 rounded-full bg-muted/80 backdrop-blur-md flex items-center justify-center pressable">
+              <Zap className="w-5 h-5 text-foreground" />
+            </button>
           </div>
-        </header>
 
+          {/* Scan area with focus brackets */}
+          <div className="flex-1 relative flex items-center justify-center">
+            {/* Background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+            
+            {/* Grid pattern */}
+            <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,hsl(0_0%_100%_/0.03)_1px,transparent_1px),linear-gradient(to_bottom,hsl(0_0%_100%_/0.03)_1px,transparent_1px)] [background-size:48px_48px]" />
 
-        {!canScan && (
-          <Card className="glass-panel p-4 mb-4 border-warning">
-            <p className="text-sm text-warning">
-              Daily scan limit reached. Upgrade to Premium for unlimited scans!
-            </p>
-          </Card>
-        )}
+            {/* Focus bracket container */}
+            <div className="relative w-[85%] aspect-square max-w-sm">
+              {/* Corner brackets */}
+              <div className="absolute left-0 top-0 h-16 w-16 border-l-[3px] border-t-[3px] border-primary rounded-tl-2xl" />
+              <div className="absolute right-0 top-0 h-16 w-16 border-r-[3px] border-t-[3px] border-primary rounded-tr-2xl" />
+              <div className="absolute left-0 bottom-0 h-16 w-16 border-l-[3px] border-b-[3px] border-primary rounded-bl-2xl" />
+              <div className="absolute right-0 bottom-0 h-16 w-16 border-r-[3px] border-b-[3px] border-primary rounded-br-2xl" />
 
-        {!preview ? (
-          <div className="space-y-4">
-            <div className="glass-panel rounded-[32px] overflow-hidden relative">
-              <div className="relative aspect-[3/4]">
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/40 via-background/10 to-background/70" />
-                <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:linear-gradient(to_right,hsl(0_0%_100%_/0.05)_1px,transparent_1px),linear-gradient(to_bottom,hsl(0_0%_100%_/0.05)_1px,transparent_1px)] [background-size:42px_42px]" />
-
-                <div className="pointer-events-none absolute left-6 top-6 h-10 w-10 border-l-2 border-t-2 border-primary/80 rounded-tl-lg" />
-                <div className="pointer-events-none absolute right-6 top-6 h-10 w-10 border-r-2 border-t-2 border-primary/80 rounded-tr-lg" />
-                <div className="pointer-events-none absolute left-6 bottom-6 h-10 w-10 border-l-2 border-b-2 border-primary/80 rounded-bl-lg" />
-                <div className="pointer-events-none absolute right-6 bottom-6 h-10 w-10 border-r-2 border-b-2 border-primary/80 rounded-br-lg" />
-
-                <div className="absolute inset-x-0 bottom-0 p-6">
-                  <div className="text-3xl font-bold tracking-tight">Scanning your vibe…</div>
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    Hold steady specifically on the food item.
-                  </div>
-
-                  <div className="mt-6 flex items-center justify-between">
-                    <div className="glass-panel rounded-full p-1 flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={openCameraPicker}
-                        disabled={!canScan}
-                        className="h-9 rounded-full bg-primary/20 px-4 text-xs font-semibold tracking-wide text-primary hover:bg-primary/25"
-                      >
-                        SCAN
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={openUploadPicker}
-                        disabled={!canScan}
-                        className="h-9 rounded-full px-4 text-xs font-semibold tracking-wide text-muted-foreground hover:bg-accent/40"
-                      >
-                        UPLOAD
-                      </Button>
-                    </div>
-
-                    <div className="glass-panel rounded-full px-4 py-2 text-xs tracking-[0.18em] text-primary">
-                      READY
-                    </div>
-                  </div>
-                </div>
+              {/* Center dot */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_12px_hsl(var(--primary))]" />
               </div>
 
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleFileSelect}
-                className="hidden"
-                id="camera-input"
-                disabled={!canScan}
-              />
-              <input
-                ref={uploadInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-                id="upload-input"
-                disabled={!canScan}
-              />
+              {/* Scan line */}
+              <div className="absolute left-4 right-4 top-[40%] h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
+
+              {/* HEALTHY pill */}
+              <div className="absolute right-0 top-[35%] chip flex items-center gap-1.5 px-3 py-1.5">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-xs font-semibold tracking-wide">HEALTHY</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom content */}
+          <div className="relative z-10 px-6 pb-8">
+            {/* Text */}
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold tracking-tight">Scanning your vibe...</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Hold steady specifically on the food item.
+              </p>
             </div>
 
-            <div className="flex items-center justify-center gap-6 pt-2">
-              <Button
-                type="button"
-                disabled={!canScan}
+            {/* Segmented toggle */}
+            <div className="flex justify-center mb-8">
+              <div className="glass-panel rounded-full p-1 flex items-center">
+                <button
+                  onClick={() => {
+                    setActiveTab("scan");
+                    openCameraPicker();
+                  }}
+                  disabled={!canScan}
+                  className={`h-10 px-6 rounded-full text-sm font-semibold tracking-wide transition-all ${
+                    activeTab === "scan"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Scan
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab("upload");
+                    openUploadPicker();
+                  }}
+                  disabled={!canScan}
+                  className={`h-10 px-6 rounded-full text-sm font-semibold tracking-wide transition-all ${
+                    activeTab === "upload"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Upload
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom controls row */}
+            <div className="flex items-center justify-between px-4">
+              {/* Left thumbnail placeholder */}
+              <div className="w-14 h-14 rounded-full bg-muted/50 border border-border/30 overflow-hidden flex items-center justify-center">
+                <span className="text-2xl">🥗</span>
+              </div>
+
+              {/* Center shutter button */}
+              <button
                 onClick={openCameraPicker}
-                className="h-20 w-20 rounded-full p-0 neon-fab"
-                aria-label="Open camera"
-              >
-                <Camera className="h-7 w-7" />
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
                 disabled={!canScan}
-                onClick={openUploadPicker}
-                className="h-14 rounded-full px-6 glass-panel"
-                aria-label="Upload a photo"
+                className="relative w-20 h-20 pressable"
               >
-                <Upload className="h-4 w-4" />
-                Upload
-              </Button>
+                {/* Outer glow ring */}
+                <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" />
+                {/* Middle ring */}
+                <div className="absolute inset-2 rounded-full border-2 border-primary/50" />
+                {/* Inner button */}
+                <div className="absolute inset-4 rounded-full bg-primary flex items-center justify-center shadow-[0_0_24px_hsl(var(--primary)/0.5)]">
+                  <Camera className="w-6 h-6 text-primary-foreground" />
+                </div>
+              </button>
+
+              {/* Right settings button */}
+              <button className="w-14 h-14 rounded-full bg-muted/50 border border-border/30 flex items-center justify-center pressable">
+                <Settings className="w-5 h-5 text-muted-foreground" />
+              </button>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="glass-panel rounded-[32px] overflow-hidden relative">
-              <div className="relative">
-                <img
-                  src={preview}
-                  alt="Meal preview"
-                  loading="lazy"
-                  className="w-full h-[52vh] object-cover"
-                />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
 
-                {analyzing && (
-                  <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center px-6 text-center">
-                    <div className="text-4xl font-bold tracking-[0.14em] text-foreground/70">
-                      ANALYZING VIBES…
-                    </div>
-                    <div className="mt-2 text-xs tracking-[0.22em] text-muted-foreground">
-                      AI PROCESSING // NEURAL NET ACTIVE
-                    </div>
+            {/* Scan limit warning */}
+            {!canScan && (
+              <Card className="glass-panel p-3 mt-4 border-warning/50">
+                <p className="text-xs text-warning text-center">
+                  Daily limit reached. Upgrade for unlimited scans!
+                </p>
+              </Card>
+            )}
 
-                    <div className="mt-8 w-full max-w-sm space-y-3">
-                      <div className="glass-panel rounded-2xl p-4">
-                        <div className="shimmer h-3 w-2/3 rounded-full" />
-                        <div className="mt-3 shimmer h-3 w-1/2 rounded-full" />
-                      </div>
-                      <div className="glass-panel rounded-2xl p-4">
-                        <div className="shimmer h-3 w-3/4 rounded-full" />
-                        <div className="mt-3 shimmer h-3 w-1/3 rounded-full" />
-                      </div>
-                    </div>
-                  </div>
-                )}
+            {/* Scans left indicator */}
+            {canScan && !profile?.is_premium && (
+              <div className="text-center mt-4">
+                <span className="text-xs text-muted-foreground">{scansLeft} scans left today</span>
               </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* ============ PREVIEW / ANALYZING VIEW ============ */
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-12 pb-4">
+            <button
+              onClick={() => {
+                setPreview(null);
+                setSelectedImage(null);
+              }}
+              disabled={analyzing}
+              className="w-12 h-12 rounded-full bg-muted/80 backdrop-blur-md flex items-center justify-center pressable"
+            >
+              <X className="w-5 h-5 text-foreground" />
+            </button>
+            <button className="w-12 h-12 rounded-full bg-muted/80 backdrop-blur-md flex items-center justify-center pressable">
+              <Zap className="w-5 h-5 text-foreground" />
+            </button>
+          </div>
 
-              <div className="p-4">
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => {
-                      setPreview(null);
-                      setSelectedImage(null);
-                    }}
-                    variant="outline"
-                    className="flex-1 glass-panel"
-                    disabled={analyzing}
-                  >
-                    Retake
-                  </Button>
+          {/* Image preview */}
+          <div className="flex-1 relative">
+            <img
+              src={preview}
+              alt="Meal preview"
+              className="w-full h-full object-cover"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background" />
 
-                  <Button
-                    onClick={() => analyzeMutation.mutate()}
-                    disabled={analyzing}
-                    className="flex-1 neon-fab"
-                  >
-                    {analyzing ? (
-                      <span className="inline-flex items-center gap-2">
-                        <span className="shimmer h-4 w-16 rounded-full" />
-                        Analyzing
-                      </span>
-                    ) : (
-                      "Analyze Meal"
-                    )}
-                  </Button>
+            {/* Analyzing overlay */}
+            {analyzing && (
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center px-6">
+                <div className="text-3xl font-bold tracking-[0.1em] text-foreground/80 text-center">
+                  ANALYZING VIBES…
+                </div>
+                <div className="mt-2 text-xs tracking-[0.2em] text-muted-foreground">
+                  AI PROCESSING // NEURAL NET ACTIVE
+                </div>
+
+                <div className="mt-8 w-full max-w-xs space-y-3">
+                  <div className="glass-panel rounded-2xl p-4">
+                    <div className="shimmer h-3 w-2/3 rounded-full" />
+                    <div className="mt-3 shimmer h-3 w-1/2 rounded-full" />
+                  </div>
+                  <div className="glass-panel rounded-2xl p-4">
+                    <div className="shimmer h-3 w-3/4 rounded-full" />
+                    <div className="mt-3 shimmer h-3 w-1/3 rounded-full" />
+                  </div>
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* Bottom actions */}
+          <div className="p-4 pb-8 bg-background">
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  setPreview(null);
+                  setSelectedImage(null);
+                }}
+                variant="outline"
+                className="flex-1 h-12 glass-panel rounded-full"
+                disabled={analyzing}
+              >
+                Retake
+              </Button>
+              <Button
+                onClick={() => analyzeMutation.mutate()}
+                disabled={analyzing}
+                className="flex-1 h-12 neon-fab rounded-full"
+              >
+                {analyzing ? "Analyzing..." : "Analyze Meal"}
+              </Button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <MobileNav />
     </div>
