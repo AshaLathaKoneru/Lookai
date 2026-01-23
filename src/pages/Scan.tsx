@@ -212,42 +212,6 @@ export default function Scan() {
           </div>
         </header>
 
-        {(isMobile || inIframe) && (
-          <Card className="glass-panel p-4 mb-4">
-            <div className="flex gap-3">
-              <div className="mt-0.5">
-                <Info className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {inIframe ? (
-                  <>
-                    <p className="mb-2">
-                      Camera & file pickers are often blocked inside the preview iframe.
-                      Open Scan in a new tab to test the camera.
-                    </p>
-                    <Button asChild variant="outline" className="glass-panel rounded-full h-9 px-4">
-                      <a href="/scan" target="_blank" rel="noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                        Open Scan in new tab
-                      </a>
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <p className="mb-1">
-                      If the camera doesn’t open, use{" "}
-                      <span className="font-medium text-foreground">Upload</span> and pick{" "}
-                      <span className="font-medium text-foreground">Camera</span> from your gallery options.
-                    </p>
-                    <p>
-                      If you previously blocked access, enable camera permission for your browser in your phone settings.
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          </Card>
-        )}
 
         {!canScan && (
           <Card className="glass-panel p-4 mb-4 border-warning">
