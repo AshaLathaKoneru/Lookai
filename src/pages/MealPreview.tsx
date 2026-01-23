@@ -1,12 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Pencil, Check, Plus, Flame, Info } from "lucide-react";
 
 export default function MealPreview() {
   const location = useLocation();
@@ -22,6 +20,9 @@ export default function MealPreview() {
     carbs: mealData?.carbs || 0,
     fats: mealData?.fats || 0,
   });
+
+  // Daily targets for macro progress bars
+  const targets = { protein: 45, carbs: 150, fats: 65 };
 
   const logMealMutation = useMutation({
     mutationFn: async () => {
@@ -64,125 +65,163 @@ export default function MealPreview() {
     return null;
   }
 
-  return (
-    <div className="min-h-screen bg-background p-4 pb-32 relative overflow-hidden">
-      <div className="pointer-events-none fixed inset-x-0 top-0 h-56 bg-[radial-gradient(60%_60%_at_50%_0%,hsl(var(--primary)/0.18),transparent_70%)]" />
+  // Calculate calorie intensity label
+  const getIntensityLabel = (cal: number) => {
+    if (cal < 200) return "Light";
+    if (cal < 400) return "Moderate";
+    return "Heavy";
+  };
 
-      <div className="container mx-auto max-w-md relative z-10">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">Scan Preview</h1>
-          <p className="text-muted-foreground">Review & tweak before logging</p>
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-12 pb-4">
+        <button
+          onClick={() => navigate("/scan")}
+          className="w-12 h-12 rounded-full border border-border/50 bg-background/60 backdrop-blur-md flex items-center justify-center pressable"
+        >
+          <ArrowLeft className="w-5 h-5 text-foreground" />
+        </button>
+        <span className="text-sm font-semibold tracking-[0.2em] text-muted-foreground">
+          SCAN PREVIEW
+        </span>
+        <button className="w-12 h-12 rounded-full border border-border/50 bg-background/60 backdrop-blur-md flex items-center justify-center pressable">
+          <Pencil className="w-5 h-5 text-foreground" />
+        </button>
+      </div>
+
+      {/* Image section */}
+      <div className="relative flex-shrink-0">
+        {image && (
+          <img
+            src={image}
+            alt="Meal"
+            className="w-full h-[55vh] object-cover"
+            loading="lazy"
+          />
+        )}
+        {/* Gradient fade */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" />
+
+        {/* 98% Match pill */}
+        <div className="absolute top-28 right-4 chip flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+          <Check className="w-4 h-4 text-primary" />
+          <span>98% MATCH</span>
         </div>
 
-        <Card className="trading-card p-4 mb-4 rounded-[32px]">
-          {image && (
-            <div className="relative overflow-hidden rounded-[22px]">
-              <img
-                src={image}
-                alt="Meal"
-                className="w-full h-[46vh] object-cover"
-                loading="lazy"
+        {/* Food name chip - bottom left of image */}
+        <div className="absolute bottom-6 left-4 flex items-center gap-3">
+          <div className="chip flex items-center gap-2 px-4 py-2.5 text-base font-medium">
+            <span className="text-primary text-lg">🍔</span>
+            <span>{meal.name || "Food Item"}</span>
+          </div>
+        </div>
+
+        {/* Info button - bottom right of image */}
+        <button className="absolute bottom-6 right-4 w-10 h-10 rounded-full border border-border/50 bg-background/60 backdrop-blur-md flex items-center justify-center">
+          <Info className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Bottom sheet */}
+      <div className="flex-1 trading-card rounded-t-[28px] -mt-4 relative z-10 px-5 pt-4 pb-32 flex flex-col">
+        {/* Drag handle */}
+        <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-6" />
+
+        {/* Calorie display */}
+        <div className="text-center mb-4">
+          <div className="flex items-baseline justify-center gap-1">
+            <span className="text-7xl font-bold neon-text tracking-tight">
+              {meal.calories}
+            </span>
+            <span className="text-xl font-medium text-muted-foreground">kcal</span>
+          </div>
+          {/* Intensity chip */}
+          <div className="chip inline-flex items-center gap-1.5 px-3 py-1.5 mt-3">
+            <Flame className="w-4 h-4 text-primary" />
+            <span className="text-xs font-semibold uppercase tracking-wide">
+              {getIntensityLabel(meal.calories)}
+            </span>
+          </div>
+        </div>
+
+        {/* Macro bars */}
+        <div className="space-y-4 mt-4 flex-1">
+          {/* Protein */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm font-medium text-foreground">Protein</span>
+              <span className="text-sm font-bold text-primary">{meal.protein}g</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((meal.protein / targets.protein) * 100, 100)}%` }}
               />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
             </div>
-          )}
-
-          <div className="space-y-4 mt-4">
-            <div className="flex items-baseline justify-between">
-              <div className="text-sm text-muted-foreground tracking-[0.2em]">TOTAL</div>
-              <div className="text-4xl font-bold neon-text">
-                {meal.calories}
-                <span className="text-base font-semibold text-muted-foreground ml-1">kcal</span>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="name">Item</Label>
-              <Input
-                id="name"
-                value={meal.name}
-                onChange={(e) => setMeal({ ...meal, name: e.target.value })}
-                className="glass-panel"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="calories">Calories</Label>
-                <Input
-                  id="calories"
-                  type="number"
-                  value={meal.calories}
-                  onChange={(e) =>
-                    setMeal({ ...meal, calories: parseInt(e.target.value) || 0 })
-                  }
-                  className="glass-panel"
-                />
-              </div>
-              <div>
-                <Label htmlFor="protein">Protein (g)</Label>
-                <Input
-                  id="protein"
-                  type="number"
-                  value={meal.protein}
-                  onChange={(e) =>
-                    setMeal({ ...meal, protein: parseFloat(e.target.value) || 0 })
-                  }
-                  className="glass-panel"
-                />
-              </div>
-              <div>
-                <Label htmlFor="carbs">Carbs (g)</Label>
-                <Input
-                  id="carbs"
-                  type="number"
-                  value={meal.carbs}
-                  onChange={(e) =>
-                    setMeal({ ...meal, carbs: parseFloat(e.target.value) || 0 })
-                  }
-                  className="glass-panel"
-                />
-              </div>
-              <div>
-                <Label htmlFor="fats">Fats (g)</Label>
-                <Input
-                  id="fats"
-                  type="number"
-                  value={meal.fats}
-                  onChange={(e) =>
-                    setMeal({ ...meal, fats: parseFloat(e.target.value) || 0 })
-                  }
-                  className="glass-panel"
-                />
-              </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-xs text-muted-foreground">0g</span>
+              <span className="text-xs text-muted-foreground">Target: {targets.protein}g</span>
             </div>
           </div>
-        </Card>
 
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/scan")}
-            className="flex-1 glass-panel"
-            disabled={logMealMutation.isPending}
-          >
-            Back
-          </Button>
-          <Button
-            onClick={() => logMealMutation.mutate()}
-            disabled={logMealMutation.isPending}
-            className="flex-1 neon-fab"
-          >
-            {logMealMutation.isPending ? (
-              <span className="inline-flex items-center gap-2">
-                <span className="shimmer h-4 w-16 rounded-full" />
-                Logging
-              </span>
-            ) : (
-              "LOG MEAL"
-            )}
-          </Button>
+          {/* Carbs */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm font-medium text-foreground">Carbs</span>
+              <span className="text-sm font-bold text-primary">{meal.carbs}g</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((meal.carbs / targets.carbs) * 100, 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-xs text-muted-foreground">0g</span>
+              <span className="text-xs text-muted-foreground">Target: {targets.carbs}g</span>
+            </div>
+          </div>
+
+          {/* Fats */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm font-medium text-foreground">Fat</span>
+              <span className="text-sm font-bold text-primary">{meal.fats}g</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((meal.fats / targets.fats) * 100, 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-xs text-muted-foreground">0g</span>
+              <span className="text-xs text-muted-foreground">Target: {targets.fats}g</span>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* Fixed bottom LOG MEAL button */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 pb-6 bg-gradient-to-t from-background via-background to-transparent z-30">
+        <Button
+          onClick={() => logMealMutation.mutate()}
+          disabled={logMealMutation.isPending}
+          className="w-full h-14 neon-fab text-base font-bold tracking-wide rounded-full flex items-center justify-center gap-2"
+        >
+          {logMealMutation.isPending ? (
+            <span className="inline-flex items-center gap-2">
+              <span className="shimmer h-4 w-16 rounded-full" />
+              Logging...
+            </span>
+          ) : (
+            <>
+              <Plus className="w-5 h-5" />
+              LOG MEAL
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
