@@ -77,6 +77,16 @@ serve(async (req) => {
             role: "system",
             content: `You are a nutrition expert. Return ONLY valid JSON with no markdown, no code blocks.
 When estimating calories and macros, reference USDA nutritional data. If uncertain about any value, use "unknown".
+
+CRITICAL: For image URLs, you MUST search and select actual Unsplash food photos that MATCH THE SPECIFIC DISH.
+- For momos/dumplings: use dumpling or dim sum photos
+- For smoothies: use smoothie or drink photos  
+- For salads: use salad photos
+- For pasta: use pasta photos
+- For curry: use curry photos
+- For chicken dishes: use chicken photos
+- Always match the image to the actual food being described
+
 Format:
 {
   "recipes": [
@@ -96,7 +106,17 @@ Format:
             role: "user",
             content: `Given the food input "${query}", return the top 3 healthy recipe suggestions. Each recipe needs:
 - Name
-- A valid Unsplash food image URL (use real Unsplash photo IDs like photo-1512621776951-a57141f2eefd, photo-1467003909585-2f8a72700288, photo-1490645935967-10de6ba17061, photo-1504674900247-0877df9cc836, photo-1540189549336-e6e99c3679fe)
+- A MATCHING Unsplash food image URL - the photo MUST show the actual dish type. Use these category-specific photo IDs:
+  * Dumplings/Momos: photo-1496116218417-1a781b1c416c, photo-1529692236671-f1f6cf9683ba, photo-1563245372-f21724e3856d
+  * Smoothies: photo-1505252585461-04db1eb84625, photo-1553530666-ba11a7da3888, photo-1638176066666-ffb2f013c7dd
+  * Salads: photo-1512621776951-a57141f2eefd, photo-1540420773420-3366772f4999, photo-1607532941433-304659e8198a
+  * Pasta: photo-1563379926898-05f4575a45d8, photo-1621996346565-e3dbc646d9a9, photo-1473093295043-cdd812d0e601
+  * Rice dishes: photo-1516714435131-44d6b64dc6a2, photo-1536304993881-ff6e9eefa2a6
+  * Curry: photo-1455619452474-d2be8b1e70cd, photo-1565557623262-b51c2513a641
+  * Chicken: photo-1532550907401-a500c9a57435, photo-1598103442097-8b74394b95c6
+  * Soup: photo-1547592166-23ac45744acd, photo-1603105037880-880cd4edfb0d
+  * Sandwich/Burger: photo-1568901346375-23c9450c58cd, photo-1553909489-cd47e0907980
+  * Breakfast: photo-1525351484163-7529414344d8, photo-1533089860892-a7c6f0a88666
 - Estimated calories (number, based on USDA data)
 - Protein in grams (with 'g' suffix)
 - Carbs in grams (with 'g' suffix)
