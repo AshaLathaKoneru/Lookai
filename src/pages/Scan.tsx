@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Zap, Settings, Image as ImageIcon } from "lucide-react";
+import { X, Zap, Settings, Image as ImageIcon, Camera, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,8 +12,13 @@ export default function Scan() {
   const [preview, setPreview] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [activeTab, setActiveTab] = useState<"scan" | "upload">("scan");
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
-  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const { toast } = useToast();
@@ -60,6 +65,104 @@ export default function Scan() {
     [todayUsage?.scan_count]
   );
 
+  // Start camera
+  const startCamera = useCallback(async () => {
+    try {
+      setCameraError(null);
+      
+      // Stop any existing stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setCameraActive(true);
+      }
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      setCameraError(err.message || "Unable to access camera");
+      setCameraActive(false);
+    }
+  }, [facingMode]);
+
+  // Stop camera
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  }, []);
+
+  // Capture photo from video
+  const capturePhoto = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    ctx.drawImage(video, 0, 0);
+    
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    setPreview(dataUrl);
+    
+    // Convert to file for API
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], "captured-meal.jpg", { type: "image/jpeg" });
+        setSelectedImage(file);
+      }
+    }, "image/jpeg", 0.9);
+    
+    stopCamera();
+  }, [stopCamera]);
+
+  // Switch camera
+  const switchCamera = useCallback(() => {
+    setFacingMode(prev => prev === "environment" ? "user" : "environment");
+  }, []);
+
+  // Start camera on mount if scan tab is active
+  useEffect(() => {
+    if (activeTab === "scan" && !preview && canScan) {
+      startCamera();
+    }
+    
+    return () => {
+      stopCamera();
+    };
+  }, [activeTab, preview, canScan]);
+
+  // Restart camera when facing mode changes
+  useEffect(() => {
+    if (cameraActive && activeTab === "scan" && !preview) {
+      startCamera();
+    }
+  }, [facingMode]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -81,10 +184,7 @@ export default function Scan() {
       setPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
-  };
-
-  const openCameraPicker = () => {
-    cameraInputRef.current?.click();
+    stopCamera();
   };
 
   const openUploadPicker = () => {
@@ -93,7 +193,7 @@ export default function Scan() {
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedImage) throw new Error("No image selected");
+      if (!selectedImage && !preview) throw new Error("No image selected");
       if (!canScan) throw new Error("Daily scan limit reached");
 
       setAnalyzing(true);
@@ -144,18 +244,23 @@ export default function Scan() {
     },
   });
 
+  const handleClose = () => {
+    stopCamera();
+    navigate("/");
+  };
+
+  const handleRetake = () => {
+    setPreview(null);
+    setSelectedImage(null);
+    if (activeTab === "scan") {
+      startCamera();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* Hidden file inputs */}
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFileSelect}
-        className="hidden"
-        disabled={!canScan}
-      />
+      {/* Hidden elements */}
+      <canvas ref={canvasRef} className="hidden" />
       <input
         ref={uploadInputRef}
         type="file"
@@ -166,7 +271,7 @@ export default function Scan() {
       />
 
       {!preview ? (
-        /* ============ CLEAN SCAN VIEW ============ */
+        /* ============ LIVE CAMERA VIEW ============ */
         <div className="flex-1 flex flex-col relative">
           {/* Header */}
           <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 pt-14">
@@ -174,7 +279,7 @@ export default function Scan() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3 }}
-              onClick={() => navigate("/")}
+              onClick={handleClose}
               className="w-11 h-11 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center active:scale-95 transition-transform"
             >
               <X className="w-5 h-5 text-white/80" />
@@ -183,20 +288,49 @@ export default function Scan() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3, delay: 0.1 }}
+              onClick={switchCamera}
               className="w-11 h-11 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center active:scale-95 transition-transform"
             >
-              <Zap className="w-5 h-5 text-white/60" />
+              <RefreshCw className="w-5 h-5 text-white/60" />
             </motion.button>
           </div>
 
-          {/* Scanner area */}
-          <div className="flex-1 relative flex items-center justify-center px-6">
-            {/* Focus bracket container */}
+          {/* Camera view / Scanner area */}
+          <div className="flex-1 relative flex items-center justify-center">
+            {/* Live video feed */}
+            {activeTab === "scan" && (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+
+            {/* Camera error state */}
+            {cameraError && activeTab === "scan" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 px-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                  <Camera className="w-8 h-8 text-white/40" />
+                </div>
+                <p className="text-white/70 mb-2">Camera access required</p>
+                <p className="text-sm text-white/40 mb-4">{cameraError}</p>
+                <Button
+                  onClick={startCamera}
+                  className="bg-[#CCFF00] text-black hover:bg-[#CCFF00]/90"
+                >
+                  Try Again
+                </Button>
+              </div>
+            )}
+
+            {/* Focus bracket overlay */}
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative w-full aspect-square max-w-xs"
+              className="relative w-full aspect-square max-w-xs mx-6 pointer-events-none z-10"
             >
               {/* Corner brackets - top left */}
               <div className="absolute left-0 top-0 h-20 w-20">
@@ -260,7 +394,7 @@ export default function Scan() {
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.5 }}
-                className="absolute -right-2 top-[30%] flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10"
+                className="absolute -right-2 top-[30%] flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10"
               >
                 <motion.span 
                   className="w-2 h-2 rounded-full bg-[#CCFF00]"
@@ -277,7 +411,7 @@ export default function Scan() {
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="relative z-10 px-6 pb-10"
+            className="relative z-10 px-6 pb-10 bg-gradient-to-t from-black via-black/90 to-transparent pt-8"
           >
             {/* Text */}
             <div className="text-center mb-8">
@@ -285,7 +419,7 @@ export default function Scan() {
                 className="text-2xl font-bold tracking-tight text-white"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                Scanning your vibe...
+                {cameraActive ? "Point at your food" : "Scanning your vibe..."}
               </h1>
               <p className="text-sm text-white/50 mt-2">
                 Hold steady specifically on the food item.
@@ -298,7 +432,7 @@ export default function Scan() {
                 <button
                   onClick={() => {
                     setActiveTab("scan");
-                    openCameraPicker();
+                    if (!cameraActive) startCamera();
                   }}
                   disabled={!canScan}
                   className={`h-10 px-7 rounded-full text-sm font-semibold tracking-wide transition-all ${
@@ -312,6 +446,7 @@ export default function Scan() {
                 <button
                   onClick={() => {
                     setActiveTab("upload");
+                    stopCamera();
                     openUploadPicker();
                   }}
                   disabled={!canScan}
@@ -341,8 +476,8 @@ export default function Scan() {
               {/* Center shutter button */}
               <motion.button
                 whileTap={{ scale: 0.9 }}
-                onClick={openCameraPicker}
-                disabled={!canScan}
+                onClick={capturePhoto}
+                disabled={!canScan || !cameraActive}
                 className="relative w-[72px] h-[72px]"
               >
                 {/* Outer glow ring */}
@@ -365,10 +500,7 @@ export default function Scan() {
                   className="absolute inset-3 rounded-full bg-[#CCFF00] flex items-center justify-center"
                   style={{ boxShadow: "0 0 24px rgba(204,255,0,0.5)" }}
                 >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-black">
-                    <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <Camera className="w-6 h-6 text-black" />
                 </div>
               </motion.button>
 
@@ -404,10 +536,7 @@ export default function Scan() {
             <motion.button
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              onClick={() => {
-                setPreview(null);
-                setSelectedImage(null);
-              }}
+              onClick={handleRetake}
               disabled={analyzing}
               className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center active:scale-95 transition-transform"
             >
@@ -476,10 +605,7 @@ export default function Scan() {
           <div className="p-5 pb-10 bg-black">
             <div className="flex gap-3">
               <Button
-                onClick={() => {
-                  setPreview(null);
-                  setSelectedImage(null);
-                }}
+                onClick={handleRetake}
                 variant="outline"
                 className="flex-1 h-14 rounded-full bg-white/5 border-white/10 text-white hover:bg-white/10"
                 disabled={analyzing}
