@@ -18,7 +18,6 @@ import Terms from "./pages/Terms";
 import Onboarding from "./pages/Onboarding";
 import Favorites from "./pages/Favorites";
 import MealPlan from "./pages/MealPlan";
-import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -97,7 +96,6 @@ const App = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/favorites" element={<Favorites />} />
                 <Route path="/meal-plan" element={<MealPlan />} />
-                <Route path="/community" element={<Community />} />
                 <Route path="/onboarding" element={<Navigate to="/" replace />} />
                 <Route path="/auth" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<NotFound />} />
