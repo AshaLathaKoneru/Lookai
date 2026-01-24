@@ -1,27 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO } from "date-fns";
-import { Flame, Beef, Wheat, Droplets } from "lucide-react";
+import { format } from "date-fns";
+import { Bell, Star, ChevronRight, Sparkles } from "lucide-react";
 import { MobileNav } from "@/components/MobileNav";
 import { useNavigate } from "react-router-dom";
-import { motion, useSpring, useTransform } from "framer-motion";
-import { useEffect, useState } from "react";
-
-// Animated number component
-function AnimatedNumber({ value, duration = 1 }: { value: number; duration?: number }) {
-  const spring = useSpring(0, { duration: duration * 1000, bounce: 0 });
-  const display = useTransform(spring, (v) => Math.round(v).toLocaleString());
-  const [displayValue, setDisplayValue] = useState("0");
-
-  useEffect(() => {
-    spring.set(value);
-    return spring.on("change", (v) => setDisplayValue(Math.round(v).toLocaleString()));
-  }, [spring, value]);
-
-  return <>{displayValue}</>;
-}
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
+  const navigate = useNavigate();
+  
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -58,221 +46,235 @@ export default function Home() {
     },
   });
 
-  const calorieGoal = profile?.calorie_goal || 2000;
-  const totalCalories = todayMeals.reduce((sum, meal) => sum + meal.calories, 0);
-  const totalProtein = todayMeals.reduce((sum, meal) => sum + Number(meal.protein), 0);
-  const totalCarbs = todayMeals.reduce((sum, meal) => sum + Number(meal.carbs), 0);
-  const totalFats = todayMeals.reduce((sum, meal) => sum + Number(meal.fats), 0);
-  const caloriesLeft = Math.max(0, calorieGoal - totalCalories);
-  const calorieProgress = Math.min((totalCalories / calorieGoal) * 100, 100);
-  const progressPercent = Math.round((totalCalories / calorieGoal) * 100);
+  const userName = profile?.name || profile?.email?.split("@")[0] || "User";
 
-  // SVG ring calculations
-  const ringSize = 280;
-  const strokeWidth = 16;
-  const radius = (ringSize - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - calorieProgress / 100);
-
-  const macros = [
-    { label: "Protein", value: totalProtein, icon: Beef, color: "text-[#CCFF00]" },
-    { label: "Carbs", value: totalCarbs, icon: Wheat, color: "text-[#CCFF00]/70" },
-    { label: "Fat", value: totalFats, icon: Droplets, color: "text-[#CCFF00]/50" },
+  // Sample food categories
+  const categories = [
+    { name: "Vegan", emoji: "🥬", color: "bg-green-100" },
+    { name: "Carb", emoji: "🍞", color: "bg-amber-100" },
+    { name: "Protein", emoji: "🥩", color: "bg-red-100" },
+    { name: "Snacks", emoji: "🍪", color: "bg-orange-100" },
+    { name: "Drink", emoji: "🥤", color: "bg-blue-100" },
   ];
 
-  const mealEmojis: Record<string, string> = {
-    breakfast: "🥣",
-    lunch: "🥗",
-    dinner: "🍽️",
-    snack: "🍎",
-  };
+  // Sample recipe suggestions
+  const recipeSuggestions = [
+    {
+      id: 1,
+      name: "Mediterranean Quinoa Bowl",
+      calories: 420,
+      rating: 4.8,
+      image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&auto=format&fit=crop",
+    },
+    {
+      id: 2,
+      name: "Grilled Salmon Salad",
+      calories: 380,
+      rating: 4.9,
+      image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&auto=format&fit=crop",
+    },
+    {
+      id: 3,
+      name: "Avocado Toast Deluxe",
+      calories: 290,
+      rating: 4.7,
+      image: "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&auto=format&fit=crop",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#000000] pb-40 relative overflow-hidden">
-      {/* Ambient glow */}
-      <div className="pointer-events-none fixed inset-x-0 top-0 h-96 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(204,255,0,0.12),transparent_70%)]" />
-
-      <div className="container mx-auto px-4 pt-6 max-w-md relative z-10">
+    <div className="min-h-screen bg-background pb-28">
+      <div className="container mx-auto px-4 pt-12 max-w-md">
         {/* Header */}
-        <header className="flex items-center justify-between mb-8">
-          {/* Avatar */}
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="w-10 h-10 rounded-full bg-gradient-to-br from-[#333] to-[#1A1A1A] border border-white/10 flex items-center justify-center overflow-hidden"
-          >
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-lg">👤</span>
-            )}
-          </motion.div>
-
-          {/* Streak badge */}
-          <motion.div 
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_0_20px_rgba(204,255,0,0.15)]"
-          >
-            <Flame className="w-4 h-4 text-[#CCFF00]" />
-            <span className="text-sm font-medium text-white/90">12 Day Streak</span>
-          </motion.div>
-        </header>
-
-        {/* Hero - Calorie Ring */}
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex justify-center mb-8"
+        <motion.header 
+          initial={{ y: -10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-center justify-between mb-6"
         >
-          <div className="relative" style={{ width: ringSize, height: ringSize }}>
-            {/* SVG Ring */}
-            <svg 
-              width={ringSize} 
-              height={ringSize} 
-              className="transform -rotate-90"
-            >
-              {/* Background track */}
-              <circle
-                cx={ringSize / 2}
-                cy={ringSize / 2}
-                r={radius}
-                fill="none"
-                stroke="#333"
-                strokeWidth={strokeWidth}
-              />
-              {/* Progress arc */}
-              <motion.circle
-                cx={ringSize / 2}
-                cy={ringSize / 2}
-                r={radius}
-                fill="none"
-                stroke="#CCFF00"
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                initial={{ strokeDashoffset: circumference }}
-                animate={{ strokeDashoffset }}
-                transition={{ duration: 1.2, ease: "easeOut", delay: 0.5 }}
-                style={{ 
-                  filter: "drop-shadow(0 0 10px #CCFF00) drop-shadow(0 0 20px rgba(204,255,0,0.5))" 
-                }}
-              />
-            </svg>
-
-            {/* Center content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span 
-                className="text-6xl font-bold tracking-tighter text-white"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-              >
-                <AnimatedNumber value={caloriesLeft} duration={1.2} />
-              </span>
-              <span className="text-sm tracking-[0.25em] text-white/60 mt-1">KCAL LEFT</span>
-              <div className="mt-3 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                <span className="text-xs text-white/70">{progressPercent}% of Daily Goal</span>
-              </div>
+          <div className="flex items-center gap-3">
+            {/* Avatar */}
+            <div className="w-12 h-12 rounded-full bg-muted overflow-hidden border-2 border-border">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xl">👤</div>
+              )}
             </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Good morning</p>
+              <h1 className="text-lg font-semibold">Hello, {userName}</h1>
+            </div>
+          </div>
+
+          {/* Notification bell */}
+          <button className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center pressable">
+            <Bell className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </motion.header>
+
+        {/* Search Bar */}
+        <motion.div
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="mb-6"
+        >
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Describe Your Food"
+              className="w-full h-14 pl-5 pr-28 rounded-2xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <Button
+              onClick={() => navigate("/scan")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-4 rounded-xl"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Assistant
+            </Button>
           </div>
         </motion.div>
 
-        {/* Macro Nutrients - Bento Grid */}
-        <motion.section 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
-          className="grid grid-cols-3 gap-3 mb-8"
-        >
-          {macros.map((macro, i) => (
-            <motion.div
-              key={macro.label}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 cursor-pointer"
-            >
-              <macro.icon className={`w-5 h-5 ${macro.color} mb-3`} />
-              <div 
-                className="text-2xl font-semibold text-white tracking-tight"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-              >
-                {macro.value.toFixed(0)}g
+        {/* Pro Banner */}
+        {!profile?.is_premium && (
+          <motion.div
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="mb-6"
+          >
+            <div className="pro-gradient soft-card p-5 flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground mb-1">Get Pro Access</h3>
+                <p className="text-sm text-muted-foreground">Unlock unlimited AI scans</p>
               </div>
-              <div className="text-xs text-white/40 tracking-wide mt-1">{macro.label}</div>
-            </motion.div>
-          ))}
-        </motion.section>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-card rounded-full px-2 py-1">
+                  <Star className="w-3 h-3 text-warning fill-warning" />
+                  <span className="text-xs font-medium">4.8</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </div>
+            </div>
+          </motion.div>
+        )}
 
-        {/* Today's Meals */}
+        {/* Categories */}
         <motion.section
-          initial={{ y: 20, opacity: 0 }}
+          initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="mb-8"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white tracking-tight">Today's Meals</h2>
-            <span className="text-sm text-white/40">{format(new Date(), "MMM d")}</span>
+            <h2 className="font-semibold">Categories</h2>
+            <button className="text-sm text-muted-foreground">See all</button>
+          </div>
+          
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+            {categories.map((category, i) => (
+              <motion.div
+                key={category.name}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.2, delay: 0.25 + i * 0.05 }}
+                className="category-chip pressable flex-shrink-0"
+              >
+                <div className={`category-chip-icon ${category.color}`}>
+                  {category.emoji}
+                </div>
+                <span className="text-xs font-medium text-muted-foreground">{category.name}</span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
+
+        {/* Today's Meals or Recipe Suggestions */}
+        <motion.section
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold">
+              {todayMeals.length > 0 ? "Today's Meals" : "Recipe Suggestions"}
+            </h2>
+            <button className="text-sm text-muted-foreground">See all</button>
           </div>
 
-          {todayMeals.length === 0 ? (
-            <div className="rounded-3xl bg-[#0A0A0A] border border-white/5 p-8 text-center">
-              <div className="text-4xl mb-3">🍽️</div>
-              <p className="text-white/60 mb-1">No meals logged yet</p>
-              <p className="text-sm text-white/40">Tap AI SCAN to log your first meal</p>
+          {todayMeals.length > 0 ? (
+            <div className="space-y-3">
+              {todayMeals.slice(0, 3).map((meal, i) => (
+                <motion.div
+                  key={meal.id}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.35 + i * 0.1 }}
+                  className="soft-card p-4 flex items-center gap-4 pressable"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center text-2xl">
+                    🍽️
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium truncate">{meal.name}</h3>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="macro-chip">
+                        <span className="macro-dot macro-dot-carbs" />
+                        {Number(meal.carbs).toFixed(0)}g
+                      </span>
+                      <span className="macro-chip">
+                        <span className="macro-dot macro-dot-protein" />
+                        {Number(meal.protein).toFixed(0)}g
+                      </span>
+                      <span className="macro-chip">
+                        <span className="macro-dot macro-dot-fat" />
+                        {Number(meal.fats).toFixed(0)}g
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-bold">{meal.calories}</span>
+                    <span className="text-sm text-muted-foreground ml-1">cal</span>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           ) : (
-            <div className="space-y-3">
-              {todayMeals.map((meal, i) => {
-                const time = meal.created_at ? format(parseISO(meal.created_at), "h:mm a") : "";
-                const mealType = meal.name?.toLowerCase().includes("breakfast") ? "breakfast" 
-                  : meal.name?.toLowerCase().includes("lunch") ? "lunch"
-                  : meal.name?.toLowerCase().includes("dinner") ? "dinner" : "snack";
-                
-                return (
-                  <motion.div
-                    key={meal.id}
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ duration: 0.3, delay: 0.6 + i * 0.1 }}
-                    whileHover={{ borderColor: "rgba(204,255,0,0.3)" }}
-                    className="rounded-2xl bg-[#0A0A0A] border border-white/5 p-4 flex items-center gap-4 transition-colors cursor-pointer group"
-                  >
-                    {/* Food emoji/icon */}
-                    <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-2xl flex-shrink-0">
-                      {mealEmojis[mealType] || "🍴"}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-white truncate">{meal.name}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-white/50 capitalize">
-                          {mealType}
-                        </span>
-                        {time && <span className="text-xs text-white/30">{time}</span>}
+            <div className="space-y-4">
+              {recipeSuggestions.map((recipe, i) => (
+                <motion.div
+                  key={recipe.id}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.35 + i * 0.1 }}
+                  className="recipe-card flex gap-4 p-3 pressable"
+                >
+                  <img
+                    src={recipe.image}
+                    alt={recipe.name}
+                    className="w-24 h-24 rounded-2xl object-cover"
+                  />
+                  <div className="flex-1 flex flex-col justify-center">
+                    <h3 className="font-medium mb-1">{recipe.name}</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5 text-warning fill-warning" />
+                        <span className="text-sm font-medium">{recipe.rating}</span>
                       </div>
+                      <span className="text-sm text-muted-foreground">•</span>
+                      <span className="text-sm text-muted-foreground">{recipe.calories} cal</span>
                     </div>
-
-                    {/* Calories */}
-                    <div className="text-right flex-shrink-0">
-                      <span 
-                        className="text-lg font-semibold text-white"
-                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                      >
-                        {meal.calories}
-                      </span>
-                      <span className="text-sm text-white/40 ml-1">kcal</span>
-                    </div>
-                  </motion.div>
-                );
-              })}
+                    <button className="text-sm text-accent font-medium self-start">
+                      Tell me Recipe →
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           )}
         </motion.section>
       </div>
-
 
       <MobileNav />
     </div>

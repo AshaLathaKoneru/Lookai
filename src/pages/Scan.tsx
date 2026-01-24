@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Zap, Settings, Image as ImageIcon, Camera, RefreshCw } from "lucide-react";
+import { X, Image as ImageIcon, Camera, RefreshCw, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -71,7 +71,6 @@ export default function Scan() {
       setCameraError(null);
       setCameraActive(false);
       
-      // Stop any existing stream
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
@@ -92,11 +91,9 @@ export default function Scan() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         
-        // Wait for video to be ready before playing
         videoRef.current.onloadedmetadata = () => {
           videoRef.current?.play().then(() => {
             setCameraActive(true);
-            console.log("Camera started successfully");
           }).catch(err => {
             console.error("Video play error:", err);
             setCameraError("Unable to start video playback");
@@ -110,7 +107,6 @@ export default function Scan() {
     }
   }, [facingMode]);
 
-  // Stop camera
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -122,7 +118,6 @@ export default function Scan() {
     setCameraActive(false);
   }, []);
 
-  // Capture photo from video
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
 
@@ -140,7 +135,6 @@ export default function Scan() {
     const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
     setPreview(dataUrl);
     
-    // Convert to file for API
     canvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], "captured-meal.jpg", { type: "image/jpeg" });
@@ -151,12 +145,10 @@ export default function Scan() {
     stopCamera();
   }, [stopCamera]);
 
-  // Switch camera
   const switchCamera = useCallback(() => {
     setFacingMode(prev => prev === "environment" ? "user" : "environment");
   }, []);
 
-  // Start camera on mount if scan tab is active
   useEffect(() => {
     if (activeTab === "scan" && !preview && canScan) {
       startCamera();
@@ -167,7 +159,6 @@ export default function Scan() {
     };
   }, [activeTab, preview, canScan]);
 
-  // Restart camera when facing mode changes
   useEffect(() => {
     if (cameraActive && activeTab === "scan" && !preview) {
       startCamera();
@@ -269,8 +260,7 @@ export default function Scan() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
-      {/* Hidden elements */}
+    <div className="min-h-screen bg-background flex flex-col">
       <canvas ref={canvasRef} className="hidden" />
       <input
         ref={uploadInputRef}
@@ -282,33 +272,30 @@ export default function Scan() {
       />
 
       {!preview ? (
-        /* ============ LIVE CAMERA VIEW ============ */
-        <div className="flex-1 flex flex-col relative">
+        /* Live Camera View */
+        <div className="flex-1 flex flex-col relative bg-foreground">
           {/* Header */}
-          <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 pt-14">
-            <motion.button
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.3 }}
+          <motion.div 
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-12"
+          >
+            <button
               onClick={handleClose}
-              className="w-11 h-11 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center active:scale-95 transition-transform"
+              className="w-11 h-11 rounded-full bg-card/20 backdrop-blur-md flex items-center justify-center pressable"
             >
-              <X className="w-5 h-5 text-white/80" />
-            </motion.button>
-            <motion.button 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
+              <X className="w-5 h-5 text-card" />
+            </button>
+            <button
               onClick={switchCamera}
-              className="w-11 h-11 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center active:scale-95 transition-transform"
+              className="w-11 h-11 rounded-full bg-card/20 backdrop-blur-md flex items-center justify-center pressable"
             >
-              <RefreshCw className="w-5 h-5 text-white/60" />
-            </motion.button>
-          </div>
+              <RefreshCw className="w-5 h-5 text-card" />
+            </button>
+          </motion.div>
 
-          {/* Camera view / Scanner area */}
-          <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-            {/* Live video feed - always render, background shows when no stream */}
+          {/* Camera view */}
+          <div className="flex-1 relative overflow-hidden">
             <video
               ref={videoRef}
               autoPlay
@@ -317,144 +304,81 @@ export default function Scan() {
               className="absolute inset-0 w-full h-full object-cover"
               style={{ 
                 transform: facingMode === "user" ? "scaleX(-1)" : "none",
-                backgroundColor: "black"
+                backgroundColor: "hsl(var(--foreground))"
               }}
             />
 
-            {/* Camera error state */}
+            {/* Camera error */}
             {cameraError && activeTab === "scan" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 px-6 text-center z-20">
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                  <Camera className="w-8 h-8 text-white/40" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-foreground px-6 text-center z-20">
+                <div className="w-16 h-16 rounded-full bg-card/10 flex items-center justify-center mb-4">
+                  <Camera className="w-8 h-8 text-card/60" />
                 </div>
-                <p className="text-white/70 mb-2">Camera access required</p>
-                <p className="text-sm text-white/40 mb-4">{cameraError}</p>
-                <Button
-                  onClick={startCamera}
-                  className="bg-[#CCFF00] text-black hover:bg-[#CCFF00]/90"
-                >
+                <p className="text-card/80 mb-2">Camera access required</p>
+                <p className="text-sm text-card/50 mb-4">{cameraError}</p>
+                <Button onClick={startCamera} variant="secondary">
                   Try Again
                 </Button>
               </div>
             )}
 
-            {/* Focus bracket overlay */}
+            {/* Focus frame */}
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative w-full aspect-square max-w-xs mx-6 pointer-events-none z-10"
+              transition={{ duration: 0.4 }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
             >
-              {/* Corner brackets - top left */}
-              <div className="absolute left-0 top-0 h-20 w-20">
-                <div className="absolute left-0 top-0 h-full w-[3px] bg-[#CCFF00] rounded-full" />
-                <div className="absolute left-0 top-0 w-full h-[3px] bg-[#CCFF00] rounded-full" />
+              <div className="w-72 h-72 relative">
+                {/* Corner brackets */}
+                <div className="absolute left-0 top-0 w-16 h-16 border-l-4 border-t-4 border-card rounded-tl-3xl" />
+                <div className="absolute right-0 top-0 w-16 h-16 border-r-4 border-t-4 border-card rounded-tr-3xl" />
+                <div className="absolute left-0 bottom-0 w-16 h-16 border-l-4 border-b-4 border-card rounded-bl-3xl" />
+                <div className="absolute right-0 bottom-0 w-16 h-16 border-r-4 border-b-4 border-card rounded-br-3xl" />
               </div>
-              
-              {/* Corner brackets - top right */}
-              <div className="absolute right-0 top-0 h-20 w-20">
-                <div className="absolute right-0 top-0 h-full w-[3px] bg-[#CCFF00] rounded-full" />
-                <div className="absolute right-0 top-0 w-full h-[3px] bg-[#CCFF00] rounded-full" />
-              </div>
-              
-              {/* Corner brackets - bottom left */}
-              <div className="absolute left-0 bottom-0 h-20 w-20">
-                <div className="absolute left-0 bottom-0 h-full w-[3px] bg-[#CCFF00] rounded-full" />
-                <div className="absolute left-0 bottom-0 w-full h-[3px] bg-[#CCFF00] rounded-full" />
-              </div>
-              
-              {/* Corner brackets - bottom right */}
-              <div className="absolute right-0 bottom-0 h-20 w-20">
-                <div className="absolute right-0 bottom-0 h-full w-[3px] bg-[#CCFF00] rounded-full" />
-                <div className="absolute right-0 bottom-0 w-full h-[3px] bg-[#CCFF00] rounded-full" />
-              </div>
-
-              {/* Animated scanning line */}
-              <motion.div
-                className="absolute left-6 right-6 h-[2px] rounded-full"
-                style={{
-                  background: "linear-gradient(90deg, transparent, #CCFF00, transparent)",
-                  boxShadow: "0 0 20px #CCFF00, 0 0 40px rgba(204,255,0,0.5)",
-                }}
-                initial={{ top: "15%" }}
-                animate={{ top: ["15%", "85%", "15%"] }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-
-              {/* Center dot */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <motion.div 
-                  className="w-2.5 h-2.5 rounded-full bg-[#CCFF00]"
-                  style={{ boxShadow: "0 0 12px #CCFF00, 0 0 24px rgba(204,255,0,0.5)" }}
-                  animate={{ 
-                    scale: [1, 1.2, 1],
-                    opacity: [0.8, 1, 0.8]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-              </div>
-
-              {/* HEALTHY badge */}
-              <motion.div 
-                initial={{ x: 20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.5 }}
-                className="absolute -right-2 top-[30%] flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10"
-              >
-                <motion.span 
-                  className="w-2 h-2 rounded-full bg-[#CCFF00]"
-                  animate={{ opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-                <span className="text-xs font-semibold tracking-wider text-white/90">HEALTHY</span>
-              </motion.div>
             </motion.div>
+
+            {/* Scans remaining badge */}
+            {!profile?.is_premium && (
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-card/20 backdrop-blur-md"
+              >
+                <span className="text-sm text-card font-medium">{scansLeft} scans left today</span>
+              </motion.div>
+            )}
           </div>
 
-          {/* Bottom content */}
+          {/* Bottom controls */}
           <motion.div 
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="relative z-10 px-6 pb-10 bg-gradient-to-t from-black via-black/90 to-transparent pt-8"
+            transition={{ duration: 0.4 }}
+            className="bg-background px-6 py-8 rounded-t-3xl -mt-6 relative z-10"
           >
-            {/* Text */}
-            <div className="text-center mb-8">
-              <h1 
-                className="text-2xl font-bold tracking-tight text-white"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-              >
-                {cameraActive ? "Point at your food" : "Scanning your vibe..."}
-              </h1>
-              <p className="text-sm text-white/50 mt-2">
-                Hold steady specifically on the food item.
-              </p>
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold mb-1">Scan Your Food</h2>
+              <p className="text-sm text-muted-foreground">Position your meal in the frame</p>
             </div>
 
-            {/* Segmented toggle */}
-            <div className="flex justify-center mb-10">
-              <div className="flex items-center p-1 rounded-full bg-white/5 backdrop-blur-md border border-white/10">
+            {/* Tab toggle */}
+            <div className="flex justify-center mb-8">
+              <div className="flex items-center p-1 rounded-full bg-muted">
                 <button
                   onClick={() => {
                     setActiveTab("scan");
                     if (!cameraActive) startCamera();
                   }}
                   disabled={!canScan}
-                  className={`h-10 px-7 rounded-full text-sm font-semibold tracking-wide transition-all ${
+                  className={`h-10 px-6 rounded-full text-sm font-semibold transition-all ${
                     activeTab === "scan"
-                      ? "bg-[#CCFF00] text-black"
-                      : "text-white/50 hover:text-white/80"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground"
                   }`}
                 >
-                  Scan
+                  Camera
                 </button>
                 <button
                   onClick={() => {
@@ -463,10 +387,10 @@ export default function Scan() {
                     openUploadPicker();
                   }}
                   disabled={!canScan}
-                  className={`h-10 px-7 rounded-full text-sm font-semibold tracking-wide transition-all ${
+                  className={`h-10 px-6 rounded-full text-sm font-semibold transition-all ${
                     activeTab === "upload"
-                      ? "bg-[#CCFF00] text-black"
-                      : "text-white/50 hover:text-white/80"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground"
                   }`}
                 >
                   Upload
@@ -474,167 +398,101 @@ export default function Scan() {
               </div>
             </div>
 
-            {/* Bottom controls row */}
-            <div className="flex items-center justify-center gap-8">
-              {/* Left - gallery button */}
-              <motion.button
-                whileTap={{ scale: 0.9 }}
+            {/* Capture button */}
+            <div className="flex items-center justify-center gap-6">
+              <button
                 onClick={openUploadPicker}
                 disabled={!canScan}
-                className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center"
+                className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center pressable"
               >
-                <span className="text-2xl">🥗</span>
-              </motion.button>
+                <ImageIcon className="w-6 h-6 text-muted-foreground" />
+              </button>
 
-              {/* Center shutter button */}
-              <motion.button
-                whileTap={{ scale: 0.9 }}
+              <button
                 onClick={capturePhoto}
                 disabled={!canScan || !cameraActive}
-                className="relative w-[72px] h-[72px]"
+                className="w-20 h-20 rounded-full bg-primary flex items-center justify-center pressable shadow-lg disabled:opacity-50"
               >
-                {/* Outer glow ring */}
-                <motion.div 
-                  className="absolute inset-0 rounded-full bg-[#CCFF00]/20"
-                  animate={{
-                    scale: [1, 1.15, 1],
-                    opacity: [0.3, 0.5, 0.3],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-                {/* Middle ring */}
-                <div className="absolute inset-1 rounded-full border-2 border-[#CCFF00]/40" />
-                {/* Inner button */}
-                <div 
-                  className="absolute inset-3 rounded-full bg-[#CCFF00] flex items-center justify-center"
-                  style={{ boxShadow: "0 0 24px rgba(204,255,0,0.5)" }}
-                >
-                  <Camera className="w-6 h-6 text-black" />
-                </div>
-              </motion.button>
+                <div className="w-16 h-16 rounded-full border-4 border-primary-foreground" />
+              </button>
 
-              {/* Right - settings button */}
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => navigate("/settings")}
-                className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center"
-              >
-                <Settings className="w-5 h-5 text-white/50" />
-              </motion.button>
+              <div className="w-14 h-14" /> {/* Spacer */}
             </div>
-
-            {/* Scan limit indicator */}
-            {!canScan ? (
-              <div className="mt-6 text-center">
-                <span className="text-xs text-[#CCFF00]/80 px-3 py-1.5 rounded-full bg-[#CCFF00]/10 border border-[#CCFF00]/20">
-                  Daily limit reached • Upgrade for unlimited
-                </span>
-              </div>
-            ) : !profile?.is_premium && (
-              <div className="mt-6 text-center">
-                <span className="text-xs text-white/40">{scansLeft} scans left today</span>
-              </div>
-            )}
           </motion.div>
         </div>
       ) : (
-        /* ============ PREVIEW / ANALYZING VIEW ============ */
+        /* Preview View */
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 pt-14">
-            <motion.button
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+          <motion.div 
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="px-4 pt-12 pb-4 flex items-center justify-between"
+          >
+            <button
               onClick={handleRetake}
-              disabled={analyzing}
-              className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center active:scale-95 transition-transform"
+              className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center pressable"
             >
-              <X className="w-5 h-5 text-white/80" />
-            </motion.button>
-            <motion.button 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center"
-            >
-              <Zap className="w-5 h-5 text-white/60" />
-            </motion.button>
-          </div>
+              <X className="w-5 h-5" />
+            </button>
+            <h1 className="text-base font-semibold">Preview</h1>
+            <div className="w-11" />
+          </motion.div>
 
           {/* Image preview */}
-          <div className="flex-1 relative">
-            <img
-              src={preview}
-              alt="Meal preview"
-              className="w-full h-full object-cover"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black" />
-
-            {/* Analyzing overlay */}
-            {analyzing && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="absolute inset-0 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center px-6"
-              >
-                {/* Scanning animation */}
-                <div className="relative w-32 h-32 mb-8">
-                  <motion.div
-                    className="absolute inset-0 rounded-full border-2 border-[#CCFF00]/30"
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.2, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                  <motion.div
-                    className="absolute inset-4 rounded-full border-2 border-[#CCFF00]/50"
-                    animate={{ scale: [1, 1.1, 1], opacity: [0.7, 0.3, 0.7] }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-                  />
-                  <div className="absolute inset-8 rounded-full bg-[#CCFF00]/10 flex items-center justify-center">
-                    <motion.div
-                      className="w-4 h-4 rounded-full bg-[#CCFF00]"
-                      animate={{ scale: [1, 1.3, 1] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                      style={{ boxShadow: "0 0 20px #CCFF00" }}
-                    />
-                  </div>
-                </div>
-
-                <h2 
-                  className="text-2xl font-bold text-white tracking-tight mb-2"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                >
-                  Analyzing...
-                </h2>
-                <p className="text-sm text-white/50">Identifying nutrients & calories</p>
-              </motion.div>
-            )}
+          <div className="flex-1 px-4 pb-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="h-full rounded-3xl overflow-hidden bg-muted"
+            >
+              <img
+                src={preview}
+                alt="Food preview"
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
           </div>
 
-          {/* Bottom actions */}
-          <div className="p-5 pb-10 bg-black">
+          {/* Analyzing overlay */}
+          {analyzing && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-30"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+              </div>
+              <p className="text-lg font-semibold">Analyzing your meal...</p>
+              <p className="text-sm text-muted-foreground mt-1">AI is identifying nutrients</p>
+            </motion.div>
+          )}
+
+          {/* Bottom buttons */}
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="p-4 pb-8"
+          >
             <div className="flex gap-3">
               <Button
-                onClick={handleRetake}
                 variant="outline"
-                className="flex-1 h-14 rounded-full bg-white/5 border-white/10 text-white hover:bg-white/10"
-                disabled={analyzing}
+                onClick={handleRetake}
+                className="flex-1 h-14 rounded-full text-base font-semibold"
               >
                 Retake
               </Button>
               <Button
                 onClick={() => analyzeMutation.mutate()}
-                disabled={analyzing}
-                className="flex-1 h-14 rounded-full bg-[#CCFF00] text-black font-semibold hover:bg-[#CCFF00]/90"
-                style={{ boxShadow: "0 0 24px rgba(204,255,0,0.4)" }}
+                disabled={analyzing || !canScan}
+                className="flex-1 h-14 rounded-full text-base font-semibold"
               >
-                {analyzing ? "Analyzing..." : "Analyze Meal"}
+                <Sparkles className="w-5 h-5 mr-2" />
+                Analyze
               </Button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

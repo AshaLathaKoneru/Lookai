@@ -4,8 +4,9 @@ import { MobileNav } from "@/components/MobileNav";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Crown, Edit3, Flame, LogOut, Settings } from "lucide-react";
+import { ChevronRight, Crown, Settings, LogOut, Target, Camera, Star, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export default function Profile() {
   const { toast } = useToast();
@@ -28,19 +29,19 @@ export default function Profile() {
     },
   });
 
-  // Get total calories logged
-  const { data: totalCalories } = useQuery({
-    queryKey: ["total-calories"],
+  // Get total meals logged
+  const { data: totalMeals } = useQuery({
+    queryKey: ["total-meals"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return 0;
       
-      const { data } = await supabase
+      const { count } = await supabase
         .from("meals")
-        .select("calories")
+        .select("*", { count: "exact", head: true })
         .eq("user_id", user.id);
       
-      return data?.reduce((sum, meal) => sum + (meal.calories || 0), 0) || 0;
+      return count || 0;
     },
   });
 
@@ -77,179 +78,204 @@ export default function Profile() {
     navigate("/auth");
   };
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000) return `${(num / 1000).toFixed(0)}k`;
-    return num.toString();
-  };
-
   const userName = profile?.name || profile?.email?.split("@")[0] || "User";
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="min-h-screen bg-background pb-28">
       {/* Header */}
-      <div className="px-4 pt-12 pb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold tracking-wide">My Profile</h1>
+      <motion.div 
+        initial={{ y: -10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="px-4 pt-12 pb-6 flex items-center justify-between"
+      >
+        <h1 className="text-xl font-bold">Profile</h1>
         <button 
           onClick={() => navigate("/settings")}
-          className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center pressable"
+          className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center pressable"
         >
           <Settings className="w-5 h-5 text-muted-foreground" />
         </button>
-      </div>
+      </motion.div>
 
       <div className="px-4 space-y-4">
         {/* Profile Card */}
-        <div className="trading-card rounded-[28px] p-6 text-center">
+        <motion.div 
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="soft-card p-6 text-center"
+        >
           {/* Avatar */}
           <div className="relative w-24 h-24 mx-auto mb-4">
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center border-2 border-primary/50 overflow-hidden">
+            <div className="w-full h-full rounded-full bg-muted overflow-hidden border-4 border-card">
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-4xl">👤</span>
+                <div className="w-full h-full flex items-center justify-center text-4xl">👤</div>
               )}
             </div>
             {profile?.is_premium && (
-              <div className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center">
-                <Check className="w-4 h-4 text-primary-foreground" />
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-accent flex items-center justify-center">
+                <Crown className="w-4 h-4 text-accent-foreground" />
               </div>
             )}
           </div>
 
           {/* Username */}
-          <h2 className="text-2xl font-bold">{userName}</h2>
-          <div className="chip inline-flex items-center gap-1.5 px-3 py-1 mt-2">
-            <span className="text-xs font-medium">Level 12 Scavenger</span>
-          </div>
+          <h2 className="text-xl font-bold">{userName}</h2>
+          <p className="text-sm text-muted-foreground">{profile?.email}</p>
 
           {/* Stats row */}
           <div className="flex items-center justify-center gap-8 mt-6">
             <div className="text-center">
-              <div className="flex items-center gap-1 text-muted-foreground text-xs mb-1">
-                <Flame className="w-3 h-3" />
-                <span>Streak</span>
-              </div>
-              <div className="text-lg font-bold">14 Days</div>
+              <div className="text-2xl font-bold">{totalMeals || 0}</div>
+              <div className="text-xs text-muted-foreground">Meals Logged</div>
             </div>
-            <div className="w-px h-8 bg-border" />
+            <div className="w-px h-10 bg-border" />
             <div className="text-center">
-              <div className="flex items-center gap-1 text-muted-foreground text-xs mb-1">
-                <span>🍽️</span>
-                <span>Logged</span>
-              </div>
-              <div className="text-lg font-bold">{formatNumber(totalCalories || 0)} Cal</div>
+              <div className="text-2xl font-bold">14</div>
+              <div className="text-xs text-muted-foreground">Day Streak</div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Premium Card */}
-        <div className="holo-card rounded-[28px] p-5">
-          <div className="flex items-start gap-4">
-            <div className="text-3xl">
-              <span className="font-bold text-foreground">LooKai</span>
-              <span className="text-primary font-bold ml-1">Pro</span>
+        {!profile?.is_premium && (
+          <motion.div 
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="soft-card p-5 bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center">
+                <Crown className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <h3 className="font-semibold">LooKai Pro</h3>
+                <p className="text-sm text-muted-foreground">Unlock all features</p>
+              </div>
             </div>
-          </div>
-          
-          <p className="text-xs text-muted-foreground mt-2">
-            Valid until: {profile?.is_premium ? "Forever" : "Not subscribed"}
-          </p>
 
-          <div className="flex items-center gap-2 mt-4">
-            <Crown className="w-5 h-5 text-warning" />
-          </div>
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-accent" />
+                <span>Unlimited AI Food Scans</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-accent" />
+                <span>Custom Calorie Goals</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-accent" />
+                <span>Priority Support</span>
+              </div>
+            </div>
 
-          <div className="space-y-2 mt-4">
-            <div className="flex items-center gap-2 text-sm">
-              <Check className="w-4 h-4 text-primary" />
-              <span>Unlock AI Food Vision</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Check className="w-4 h-4 text-primary" />
-              <span>Unlimited Meal Logs</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Check className="w-4 h-4 text-primary" />
-              <span>Exclusive Dark Themes</span>
-            </div>
-          </div>
-
-          {!profile?.is_premium && (
-            <Button className="w-full mt-4 neon-fab rounded-full h-12">
-              UPGRADE NOW | ₹49/MO
+            <Button className="w-full h-12 rounded-full">
+              Upgrade Now • ₹49/month
             </Button>
-          )}
-        </div>
+          </motion.div>
+        )}
 
         {/* Daily Goal Card */}
-        <div className="trading-card rounded-[28px] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Daily Goal</h3>
-            <button className="text-xs text-muted-foreground">Edit History</button>
-          </div>
-
-          <p className="text-xs text-muted-foreground mb-2">Target Calories</p>
-          
-          <div className="flex items-center justify-between">
-            {isEditingGoal ? (
-              <div className="flex items-center gap-2 flex-1">
-                <input
-                  type="number"
-                  value={calorieGoal}
-                  onChange={(e) => setCalorieGoal(parseInt(e.target.value) || 2000)}
-                  className="bg-muted/50 rounded-xl px-4 py-2 text-2xl font-bold w-32 focus:outline-none focus:ring-2 focus:ring-primary"
-                  autoFocus
-                />
-                <Button 
-                  size="sm" 
-                  onClick={() => updateGoalMutation.mutate()}
-                  className="neon-fab"
-                >
-                  Save
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="ghost"
-                  onClick={() => setIsEditingGoal(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="text-3xl font-bold">
-                  {calorieGoal.toLocaleString()}
-                  <span className="text-base font-normal text-muted-foreground ml-1">kcal</span>
+        <motion.div 
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="soft-card p-5"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center">
+              <Target className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold">Daily Calorie Goal</h3>
+              {isEditingGoal ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <input
+                    type="number"
+                    value={calorieGoal}
+                    onChange={(e) => setCalorieGoal(parseInt(e.target.value) || 2000)}
+                    className="w-24 h-8 bg-muted rounded-lg px-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                    autoFocus
+                  />
+                  <Button 
+                    size="sm" 
+                    onClick={() => updateGoalMutation.mutate()}
+                    className="h-8 rounded-lg"
+                  >
+                    Save
+                  </Button>
                 </div>
-                <button
-                  onClick={() => profile?.is_premium && setIsEditingGoal(true)}
-                  className={`w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center ${!profile?.is_premium ? 'opacity-50' : 'pressable'}`}
-                  disabled={!profile?.is_premium}
-                >
-                  <Edit3 className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </>
-            )}
+              ) : (
+                <p className="text-muted-foreground text-sm">{calorieGoal.toLocaleString()} calories</p>
+              )}
+            </div>
+            <button
+              onClick={() => setIsEditingGoal(!isEditingGoal)}
+              className="text-muted-foreground pressable"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
-          
-          {!profile?.is_premium && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Upgrade to Premium to customize your goal
-            </p>
-          )}
-        </div>
+        </motion.div>
+
+        {/* Menu Items */}
+        <motion.div 
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="soft-card overflow-hidden"
+        >
+          <button
+            onClick={() => navigate("/settings")}
+            className="w-full p-4 flex items-center gap-3 border-b border-border pressable"
+          >
+            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+              <Settings className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <span className="flex-1 text-left font-medium">Settings</span>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+
+          <button
+            onClick={() => navigate("/scan")}
+            className="w-full p-4 flex items-center gap-3 border-b border-border pressable"
+          >
+            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+              <Camera className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <span className="flex-1 text-left font-medium">Scan Food</span>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+
+          <button
+            onClick={() => {}}
+            className="w-full p-4 flex items-center gap-3 pressable"
+          >
+            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+              <Star className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <span className="flex-1 text-left font-medium">Rate App</span>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </motion.div>
 
         {/* Sign Out */}
-        <button
+        <motion.button
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
           onClick={handleSignOut}
-          className="w-full trading-card rounded-full py-4 flex items-center justify-center gap-2 text-muted-foreground pressable"
+          className="w-full soft-card p-4 flex items-center justify-center gap-2 text-destructive pressable"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-5 h-5" />
           Sign Out
-        </button>
+        </motion.button>
 
         {/* Version */}
-        <p className="text-center text-xs text-muted-foreground pt-4">
+        <p className="text-center text-xs text-muted-foreground pt-2 pb-4">
           LooKai v1.0.4 • Build 8842
         </p>
       </div>
