@@ -48,6 +48,30 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Listen for localStorage changes (when onboarding completes)
+  useEffect(() => {
+    const checkOnboarding = () => {
+      const onboardingComplete = localStorage.getItem("lookai_onboarding_complete");
+      setNeedsOnboarding(!onboardingComplete);
+    };
+
+    // Check immediately
+    if (session) {
+      checkOnboarding();
+    }
+
+    // Listen for storage events (for cross-tab sync)
+    window.addEventListener("storage", checkOnboarding);
+
+    // Also listen for custom event for same-tab updates
+    window.addEventListener("onboarding-complete", checkOnboarding);
+
+    return () => {
+      window.removeEventListener("storage", checkOnboarding);
+      window.removeEventListener("onboarding-complete", checkOnboarding);
+    };
+  }, [session]);
+
   const checkOnboardingStatus = () => {
     const onboardingComplete = localStorage.getItem("lookai_onboarding_complete");
     setNeedsOnboarding(!onboardingComplete);

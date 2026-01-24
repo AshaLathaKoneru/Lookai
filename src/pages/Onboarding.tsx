@@ -92,12 +92,18 @@ export default function Onboarding() {
       // Store that onboarding is complete in localStorage
       localStorage.setItem("lookai_onboarding_complete", "true");
 
+      // Dispatch custom event to notify App.tsx
+      window.dispatchEvent(new Event("onboarding-complete"));
+
       toast({
         title: "Welcome to LooKai!",
         description: "Your preferences have been saved.",
       });
 
-      navigate("/");
+      // Small delay to ensure state updates before navigation
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 100);
     } catch (error) {
       console.error("Error saving preferences:", error);
       toast({
