@@ -1,4 +1,4 @@
-import { Home, Grid3X3, Camera, Heart, User } from "lucide-react";
+import { Home, Calendar, Camera, Heart, Users } from "lucide-react";
 import { NavLink } from "./NavLink";
 import { motion } from "framer-motion";
 
@@ -22,12 +22,12 @@ export const MobileNav = () => {
             </NavLink>
 
             <NavLink
-              to="/log"
+              to="/meal-plan"
               className="flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-foreground px-3 py-2"
               activeClassName="text-foreground"
             >
-              <Grid3X3 className="h-6 w-6" />
-              <span className="text-[10px] font-medium">Categories</span>
+              <Calendar className="h-6 w-6" />
+              <span className="text-[10px] font-medium">Plan</span>
             </NavLink>
 
             <NavLink
@@ -41,7 +41,7 @@ export const MobileNav = () => {
             </NavLink>
             
             <NavLink
-              to="/insights"
+              to="/favorites"
               className="flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-foreground px-3 py-2"
               activeClassName="text-foreground"
             >
@@ -50,12 +50,12 @@ export const MobileNav = () => {
             </NavLink>
             
             <NavLink
-              to="/profile"
+              to="/community"
               className="flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-foreground px-3 py-2"
               activeClassName="text-foreground"
             >
-              <User className="h-6 w-6" />
-              <span className="text-[10px] font-medium">Profile</span>
+              <Users className="h-6 w-6" />
+              <span className="text-[10px] font-medium">Social</span>
             </NavLink>
           </div>
         </motion.div>

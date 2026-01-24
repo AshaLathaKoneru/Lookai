@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Bell, Star, ChevronRight, Sparkles, Loader2, X, Clock, Users, Leaf } from "lucide-react";
+import { Bell, Star, ChevronRight, Sparkles, Loader2, X, Clock, Users, Leaf, Heart, Calendar } from "lucide-react";
 import { MobileNav } from "@/components/MobileNav";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useFavoriteRecipes } from "@/hooks/useFavoriteRecipes";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ interface RecipeDetails {
 export default function Home() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isFavorite, toggleFavorite } = useFavoriteRecipes();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -459,12 +461,22 @@ export default function Home() {
                         <span className="text-xs text-muted-foreground">F: {recipe.fat}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{recipe.summary}</p>
-                      <button 
-                        onClick={() => handleTellMeRecipe(recipe)}
-                        className="text-sm text-accent font-medium self-start"
-                      >
-                        Tell me Recipe →
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => handleTellMeRecipe(recipe)}
+                          className="text-sm text-accent font-medium"
+                        >
+                          Tell me Recipe →
+                        </button>
+                        <button
+                          onClick={() => toggleFavorite(recipe)}
+                          className={`p-1.5 rounded-full transition-colors ${
+                            isFavorite(recipe.name) ? "text-red-500" : "text-muted-foreground hover:text-red-500"
+                          }`}
+                        >
+                          <Heart className={`w-4 h-4 ${isFavorite(recipe.name) ? "fill-current" : ""}`} />
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
