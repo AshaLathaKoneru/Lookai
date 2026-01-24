@@ -59,11 +59,17 @@ export default function Scan() {
     },
   });
 
-  const canScan = profile?.is_premium || (todayUsage?.scan_count || 0) < 5;
-  const scansLeft = useMemo(
-    () => Math.max(0, 5 - (todayUsage?.scan_count || 0)),
-    [todayUsage?.scan_count]
-  );
+  const bonusScans = profile?.bonus_scans || 0;
+  const dailyScansUsed = todayUsage?.scan_count || 0;
+  const dailyLimit = 5;
+  
+  // Premium users: unlimited, otherwise check daily limit + bonus scans
+  const canScan = profile?.is_premium || dailyScansUsed < dailyLimit || bonusScans > 0;
+  const scansLeft = useMemo(() => {
+    if (profile?.is_premium) return Infinity;
+    const dailyRemaining = Math.max(0, dailyLimit - dailyScansUsed);
+    return dailyRemaining + bonusScans;
+  }, [dailyScansUsed, bonusScans, profile?.is_premium]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -195,7 +201,7 @@ export default function Scan() {
   const analyzeMutation = useMutation({
     mutationFn: async () => {
       if (!selectedImage && !preview) throw new Error("No image selected");
-      if (!canScan) throw new Error("Daily scan limit reached");
+      if (!canScan) throw new Error("No scans remaining. Get premium for unlimited scans!");
 
       setAnalyzing(true);
 
@@ -204,17 +210,28 @@ export default function Scan() {
 
       const today = new Date().toISOString().split("T")[0];
       const currentCount = todayUsage?.scan_count || 0;
+      const currentBonusScans = profile?.bonus_scans || 0;
 
-      if (todayUsage) {
+      // Track usage: first use daily free scans, then bonus scans
+      if (currentCount < dailyLimit) {
+        // Use daily free scan
+        if (todayUsage) {
+          await supabase
+            .from("scan_usage")
+            .update({ scan_count: currentCount + 1 })
+            .eq("user_id", user.id)
+            .eq("scan_date", today);
+        } else {
+          await supabase
+            .from("scan_usage")
+            .insert({ user_id: user.id, scan_date: today, scan_count: 1 });
+        }
+      } else if (currentBonusScans > 0) {
+        // Use bonus scan
         await supabase
-          .from("scan_usage")
-          .update({ scan_count: currentCount + 1 })
-          .eq("user_id", user.id)
-          .eq("scan_date", today);
-      } else {
-        await supabase
-          .from("scan_usage")
-          .insert({ user_id: user.id, scan_date: today, scan_count: 1 });
+          .from("profiles")
+          .update({ bonus_scans: currentBonusScans - 1 })
+          .eq("user_id", user.id);
       }
 
       const base64 = preview?.split(",")[1];
@@ -231,6 +248,7 @@ export default function Scan() {
         description: `Identified: ${data.name}`,
       });
       queryClient.invalidateQueries({ queryKey: ["scan-usage"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
       navigate("/meal-preview", { state: { mealData: data, image: preview } });
     },
     onError: (error: Error) => {
