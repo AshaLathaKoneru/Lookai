@@ -4,7 +4,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { X, Pencil, Check, Plus, Flame, Info } from "lucide-react";
+import { ChevronLeft, Heart, Star, Flame } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function MealPreview() {
   const location = useLocation();
@@ -20,9 +21,6 @@ export default function MealPreview() {
     carbs: mealData?.carbs || 0,
     fats: mealData?.fats || 0,
   });
-
-  // Daily targets for macro progress bars
-  const targets = { protein: 45, carbs: 150, fats: 65 };
 
   const logMealMutation = useMutation({
     mutationFn: async () => {
@@ -65,163 +63,141 @@ export default function MealPreview() {
     return null;
   }
 
-  // Calculate calorie intensity label
-  const getIntensityLabel = (cal: number) => {
-    if (cal < 200) return "Light";
-    if (cal < 400) return "Moderate";
-    return "Heavy";
-  };
+  // Calculate health score based on macros balance
+  const totalMacros = meal.protein + meal.carbs + meal.fats;
+  const healthScore = totalMacros > 0 ? Math.min(95, Math.round((meal.protein / totalMacros) * 100 + 40)) : 75;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-12 pb-4">
+      <motion.div 
+        initial={{ y: -10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-12 pb-4"
+      >
         <button
           onClick={() => navigate("/")}
-          className="w-12 h-12 rounded-full border border-border/50 bg-background/60 backdrop-blur-md flex items-center justify-center pressable"
+          className="w-11 h-11 rounded-full bg-card/80 backdrop-blur-sm border border-border flex items-center justify-center pressable"
         >
-          <X className="w-5 h-5 text-foreground" />
+          <ChevronLeft className="w-5 h-5" />
         </button>
-        <span className="text-sm font-semibold tracking-[0.2em] text-muted-foreground">
-          SCAN PREVIEW
-        </span>
-        <button className="w-12 h-12 rounded-full border border-border/50 bg-background/60 backdrop-blur-md flex items-center justify-center pressable">
-          <Pencil className="w-5 h-5 text-foreground" />
+        <h1 className="text-base font-semibold">Food Details</h1>
+        <button className="w-11 h-11 rounded-full bg-card/80 backdrop-blur-sm border border-border flex items-center justify-center pressable">
+          <Heart className="w-5 h-5" />
         </button>
-      </div>
+      </motion.div>
 
-      {/* Image section */}
-      <div className="relative flex-shrink-0">
-        {image && (
-          <img
-            src={image}
-            alt="Meal"
-            className="w-full h-[55vh] object-cover"
-            loading="lazy"
-          />
-        )}
-        {/* Gradient fade */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" />
-
-        {/* 98% Match pill */}
-        <div className="absolute top-28 right-4 chip flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <Check className="w-4 h-4 text-primary" />
-          <span>98% MATCH</span>
-        </div>
-
-        {/* Food name chip - bottom left of image */}
-        <div className="absolute bottom-6 left-4 flex items-center gap-3">
-          <div className="chip flex items-center gap-2 px-4 py-2.5 text-base font-medium">
-            <span className="text-primary text-lg">🍔</span>
-            <span>{meal.name || "Food Item"}</span>
-          </div>
-        </div>
-
-        {/* Info button - bottom right of image */}
-        <button className="absolute bottom-6 right-4 w-10 h-10 rounded-full border border-border/50 bg-background/60 backdrop-blur-md flex items-center justify-center">
-          <Info className="w-4 h-4 text-muted-foreground" />
-        </button>
-      </div>
-
-      {/* Bottom sheet */}
-      <div className="flex-1 trading-card rounded-t-[28px] -mt-4 relative z-10 px-5 pt-4 pb-32 flex flex-col">
-        {/* Drag handle */}
-        <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-6" />
-
-        {/* Calorie display */}
-        <div className="text-center mb-4">
-          <div className="flex items-baseline justify-center gap-1">
-            <span className="text-7xl font-bold neon-text tracking-tight">
-              {meal.calories}
-            </span>
-            <span className="text-xl font-medium text-muted-foreground">kcal</span>
-          </div>
-          {/* Intensity chip */}
-          <div className="chip inline-flex items-center gap-1.5 px-3 py-1.5 mt-3">
-            <Flame className="w-4 h-4 text-primary" />
-            <span className="text-xs font-semibold uppercase tracking-wide">
-              {getIntensityLabel(meal.calories)}
-            </span>
-          </div>
-        </div>
-
-        {/* Macro bars */}
-        <div className="space-y-4 mt-4 flex-1">
-          {/* Protein */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm font-medium text-foreground">Protein</span>
-              <span className="text-sm font-bold text-primary">{meal.protein}g</span>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((meal.protein / targets.protein) * 100, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-xs text-muted-foreground">0g</span>
-              <span className="text-xs text-muted-foreground">Target: {targets.protein}g</span>
-            </div>
-          </div>
-
-          {/* Carbs */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm font-medium text-foreground">Carbs</span>
-              <span className="text-sm font-bold text-primary">{meal.carbs}g</span>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((meal.carbs / targets.carbs) * 100, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-xs text-muted-foreground">0g</span>
-              <span className="text-xs text-muted-foreground">Target: {targets.carbs}g</span>
-            </div>
-          </div>
-
-          {/* Fats */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm font-medium text-foreground">Fat</span>
-              <span className="text-sm font-bold text-primary">{meal.fats}g</span>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((meal.fats / targets.fats) * 100, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-xs text-muted-foreground">0g</span>
-              <span className="text-xs text-muted-foreground">Target: {targets.fats}g</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Fixed bottom LOG MEAL button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-6 bg-gradient-to-t from-background via-background to-transparent z-30">
-        <Button
-          onClick={() => logMealMutation.mutate()}
-          disabled={logMealMutation.isPending}
-          className="w-full h-14 neon-fab text-base font-bold tracking-wide rounded-full flex items-center justify-center gap-2"
+      {/* Circular Food Image */}
+      <div className="pt-24 pb-6 flex justify-center">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="relative"
         >
-          {logMealMutation.isPending ? (
-            <span className="inline-flex items-center gap-2">
-              <span className="shimmer h-4 w-16 rounded-full" />
-              Logging...
+          <div className="w-64 h-64 rounded-full overflow-hidden border-4 border-card shadow-xl">
+            {image ? (
+              <img
+                src={image}
+                alt="Meal"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-muted flex items-center justify-center text-6xl">
+                🍽️
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Content */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="flex-1 px-6 pb-32"
+      >
+        {/* Food Name & Rating */}
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold mb-2">{meal.name || "Food Item"}</h2>
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`w-4 h-4 ${star <= 4 ? "text-warning fill-warning" : "text-muted"}`}
+                />
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              <Flame className="w-4 h-4 text-accent" />
+              <span className="font-semibold">{meal.calories}</span>
+              <span className="text-muted-foreground text-sm">calories</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Macro Chips */}
+        <div className="flex justify-center gap-4 mb-8">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border">
+            <span className="w-3 h-3 rounded-full bg-macro-carbs" />
+            <span className="text-sm">
+              <span className="font-semibold">{meal.carbs}g</span>
+              <span className="text-muted-foreground ml-1">Carbs</span>
             </span>
-          ) : (
-            <>
-              <Plus className="w-5 h-5" />
-              LOG MEAL
-            </>
-          )}
-        </Button>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border">
+            <span className="w-3 h-3 rounded-full bg-macro-protein" />
+            <span className="text-sm">
+              <span className="font-semibold">{meal.protein}g</span>
+              <span className="text-muted-foreground ml-1">Protein</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border">
+            <span className="w-3 h-3 rounded-full bg-macro-fat" />
+            <span className="text-sm">
+              <span className="font-semibold">{meal.fats}g</span>
+              <span className="text-muted-foreground ml-1">Fat</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Healthy Score */}
+        <div className="soft-card p-5 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-medium">Healthy Score</span>
+            <span className="font-bold text-accent">{healthScore}%</span>
+          </div>
+          <div className="health-bar">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${healthScore}%` }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="health-bar-fill"
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Fixed Bottom Buttons */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 pb-6 bg-gradient-to-t from-background via-background to-transparent">
+        <div className="flex gap-3 max-w-md mx-auto">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/scan")}
+            className="flex-1 h-14 rounded-full text-base font-semibold border-2"
+          >
+            Update Details
+          </Button>
+          <Button
+            onClick={() => logMealMutation.mutate()}
+            disabled={logMealMutation.isPending}
+            className="flex-1 h-14 rounded-full text-base font-semibold"
+          >
+            {logMealMutation.isPending ? "Adding..." : "Add Food"}
+          </Button>
+        </div>
       </div>
     </div>
   );
