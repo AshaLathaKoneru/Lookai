@@ -205,6 +205,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bonus_scans: number | null
           calorie_goal: number | null
           created_at: string | null
           email: string | null
@@ -216,6 +217,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bonus_scans?: number | null
           calorie_goal?: number | null
           created_at?: string | null
           email?: string | null
@@ -227,6 +229,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bonus_scans?: number | null
           calorie_goal?: number | null
           created_at?: string | null
           email?: string | null
