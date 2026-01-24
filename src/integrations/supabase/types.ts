@@ -89,6 +89,33 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_cache: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          query_hash: string
+          recipes: Json
+          search_query: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          query_hash: string
+          recipes: Json
+          search_query: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          query_hash?: string
+          recipes?: Json
+          search_query?: string
+        }
+        Relationships: []
+      }
       scan_usage: {
         Row: {
           created_at: string | null

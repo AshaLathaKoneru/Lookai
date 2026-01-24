@@ -2,3 +2,9 @@ project_id = "gqyboskrxemybclaexne"
 
 [functions.analyze-meal]
 verify_jwt = false
+
+[functions.get-recipe-suggestions]
+verify_jwt = false
+
+[functions.get-recipe-details]
+verify_jwt = false
