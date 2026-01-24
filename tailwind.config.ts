@@ -7,7 +7,7 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1.5rem",
       screens: {
         "2xl": "1400px",
       },
@@ -67,26 +67,26 @@ export default {
         },
       },
       borderRadius: {
+        "2xl": "1.25rem",
+        "3xl": "1.5rem",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontSize: {
+        "display": ["22px", { lineHeight: "1.2", fontWeight: "600", letterSpacing: "-0.025em" }],
+        "section": ["17px", { lineHeight: "1.3", fontWeight: "600", letterSpacing: "-0.02em" }],
+        "body": ["15px", { lineHeight: "1.5" }],
+        "caption": ["13px", { lineHeight: "1.4" }],
+      },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
