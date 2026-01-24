@@ -12,6 +12,7 @@ import Scan from "./pages/Scan";
 import MealPreview from "./pages/MealPreview";
 import Insights from "./pages/Insights";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => {
                 <Route path="/meal-preview" element={<MealPreview />} />
                 <Route path="/insights" element={<Insights />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
                 <Route path="/auth" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<NotFound />} />
               </>
