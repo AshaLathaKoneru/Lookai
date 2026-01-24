@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
-import { Flame, Beef, Wheat, Droplets, Camera, Utensils } from "lucide-react";
+import { Flame, Beef, Wheat, Droplets } from "lucide-react";
 import { MobileNav } from "@/components/MobileNav";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, useSpring, useTransform } from "framer-motion";
 import { useEffect, useState } from "react";
 
@@ -273,46 +273,6 @@ export default function Home() {
         </motion.section>
       </div>
 
-      {/* Floating Action Button - AI SCAN */}
-      <div className="fixed inset-x-0 bottom-24 z-40 px-4">
-        <div className="mx-auto max-w-md">
-          <Link to="/scan">
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="relative w-full h-14 rounded-full bg-[#CCFF00] flex items-center justify-center gap-3 cursor-pointer overflow-hidden"
-            >
-              {/* Breathing glow effect */}
-              <motion.div
-                className="absolute inset-0 bg-[#CCFF00]"
-                animate={{
-                  boxShadow: [
-                    "0 0 20px rgba(204,255,0,0.4), 0 0 40px rgba(204,255,0,0.2)",
-                    "0 0 30px rgba(204,255,0,0.6), 0 0 60px rgba(204,255,0,0.3)",
-                    "0 0 20px rgba(204,255,0,0.4), 0 0 40px rgba(204,255,0,0.2)",
-                  ],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              
-              <Camera className="w-5 h-5 text-black relative z-10" />
-              <span 
-                className="text-base font-bold text-black tracking-wide relative z-10"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-              >
-                AI SCAN
-              </span>
-            </motion.div>
-          </Link>
-        </div>
-      </div>
 
       <MobileNav />
     </div>
