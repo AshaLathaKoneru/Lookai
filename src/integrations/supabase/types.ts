@@ -14,6 +14,122 @@ export type Database = {
   }
   public: {
     Tables: {
+      favorite_recipes: {
+        Row: {
+          calories: number | null
+          carbs: string | null
+          created_at: string
+          fat: string | null
+          id: string
+          protein: string | null
+          recipe_image: string | null
+          recipe_name: string
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          carbs?: string | null
+          created_at?: string
+          fat?: string | null
+          id?: string
+          protein?: string | null
+          recipe_image?: string | null
+          recipe_name: string
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          carbs?: string | null
+          created_at?: string
+          fat?: string | null
+          id?: string
+          protein?: string | null
+          recipe_image?: string | null
+          recipe_name?: string
+          summary?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meal_likes: {
+        Row: {
+          created_at: string
+          id: string
+          shared_meal_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          shared_meal_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          shared_meal_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_likes_shared_meal_id_fkey"
+            columns: ["shared_meal_id"]
+            isOneToOne: false
+            referencedRelation: "shared_meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_plans: {
+        Row: {
+          calories: number | null
+          carbs: string | null
+          created_at: string
+          fat: string | null
+          id: string
+          meal_type: string
+          notes: string | null
+          plan_date: string
+          protein: string | null
+          recipe_image: string | null
+          recipe_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          carbs?: string | null
+          created_at?: string
+          fat?: string | null
+          id?: string
+          meal_type: string
+          notes?: string | null
+          plan_date: string
+          protein?: string | null
+          recipe_image?: string | null
+          recipe_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          carbs?: string | null
+          created_at?: string
+          fat?: string | null
+          id?: string
+          meal_type?: string
+          notes?: string | null
+          plan_date?: string
+          protein?: string | null
+          recipe_image?: string | null
+          recipe_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       meals: {
         Row: {
           calories: number
@@ -53,6 +169,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          daily_summary: boolean
+          id: string
+          meal_reminders: boolean
+          reminder_times: Json | null
+          social_notifications: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_summary?: boolean
+          id?: string
+          meal_reminders?: boolean
+          reminder_times?: Json | null
+          social_notifications?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_summary?: boolean
+          id?: string
+          meal_reminders?: boolean
+          reminder_times?: Json | null
+          social_notifications?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -85,6 +234,33 @@ export type Database = {
           is_premium?: boolean | null
           name?: string | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
           user_id?: string
         }
         Relationships: []
@@ -140,9 +316,79 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_meals: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          is_public: boolean
+          likes_count: number
+          meal_id: string | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          likes_count?: number
+          meal_id?: string | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          likes_count?: number
+          meal_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_meals_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      weekly_leaderboard: {
+        Row: {
+          avatar_url: string | null
+          calorie_goal: number | null
+          goal_percentage: number | null
+          meals_logged: number | null
+          name: string | null
+          total_calories: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
