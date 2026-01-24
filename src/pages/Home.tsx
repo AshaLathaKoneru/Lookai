@@ -102,7 +102,11 @@ export default function Home() {
             transition={{ duration: 0.3 }}
             className="w-10 h-10 rounded-full bg-gradient-to-br from-[#333] to-[#1A1A1A] border border-white/10 flex items-center justify-center overflow-hidden"
           >
-            <span className="text-lg">👤</span>
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-lg">👤</span>
+            )}
           </motion.div>
 
           {/* Streak badge */}
