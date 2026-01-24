@@ -69,17 +69,19 @@ export default function Scan() {
   const startCamera = useCallback(async () => {
     try {
       setCameraError(null);
+      setCameraActive(false);
       
       // Stop any existing stream
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
 
       const constraints: MediaStreamConstraints = {
         video: {
-          facingMode: facingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
         audio: false,
       };
@@ -89,8 +91,17 @@ export default function Scan() {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setCameraActive(true);
+        
+        // Wait for video to be ready before playing
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().then(() => {
+            setCameraActive(true);
+            console.log("Camera started successfully");
+          }).catch(err => {
+            console.error("Video play error:", err);
+            setCameraError("Unable to start video playback");
+          });
+        };
       }
     } catch (err: any) {
       console.error("Camera error:", err);
@@ -296,21 +307,23 @@ export default function Scan() {
           </div>
 
           {/* Camera view / Scanner area */}
-          <div className="flex-1 relative flex items-center justify-center">
-            {/* Live video feed */}
-            {activeTab === "scan" && (
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            )}
+          <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+            {/* Live video feed - always render, background shows when no stream */}
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ 
+                transform: facingMode === "user" ? "scaleX(-1)" : "none",
+                backgroundColor: "black"
+              }}
+            />
 
             {/* Camera error state */}
             {cameraError && activeTab === "scan" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 px-6 text-center">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 px-6 text-center z-20">
                 <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
                   <Camera className="w-8 h-8 text-white/40" />
                 </div>
