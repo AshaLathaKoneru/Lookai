@@ -1,4 +1,4 @@
-import { Home, BookOpen, Camera, BarChart3, User } from "lucide-react";
+import { Home, BookOpen, Camera, Heart, User } from "lucide-react";
 import { NavLink } from "./NavLink";
 
 export const MobileNav = () => {
@@ -37,14 +37,14 @@ export const MobileNav = () => {
             </div>
           </NavLink>
           
-          {/* Insights */}
+          {/* Favorites */}
           <NavLink
-            to="/insights"
+            to="/favorites"
             className="flex flex-col items-center gap-1 text-muted-foreground transition-colors px-3 py-2"
             activeClassName="text-accent"
           >
-            <BarChart3 className="h-5 w-5" strokeWidth={1.5} />
-            <span className="text-[10px] font-medium">Insights</span>
+            <Heart className="h-5 w-5" strokeWidth={1.5} />
+            <span className="text-[10px] font-medium">Saved</span>
           </NavLink>
           
           {/* Profile */}
