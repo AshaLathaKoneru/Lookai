@@ -2,115 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+/* Import Premium Modern Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* 
+  Premium White Nutrition Design System
+  Visual: Apple Health + Notion + Headspace + 2026 Minimal
 */
 
 @layer base {
   :root {
-    /* Light organic palette */
-    --background: 30 20% 97%;
-    --foreground: 0 0% 10%;
+    /* Pure white canvas */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
 
-    /* Clean white surfaces */
+    /* Card surfaces with subtle border */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 0 0% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 0 0% 4%;
 
-    /* Dark charcoal primary for buttons */
-    --primary: 0 0% 15%;
+    /* Primary: Deep charcoal for buttons */
+    --primary: 0 0% 9%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 20% 94%;
-    --secondary-foreground: 0 0% 10%;
+    /* Secondary: Soft neutral beige */
+    --secondary: 40 20% 96%;
+    --secondary-foreground: 0 0% 9%;
 
-    --muted: 30 10% 92%;
+    /* Muted: Light neutral */
+    --muted: 40 10% 96%;
     --muted-foreground: 0 0% 45%;
 
-    /* Natural green accent for health indicators */
-    --accent: 142 50% 45%;
+    /* Accent: Positive nutrition green */
+    --accent: 152 69% 42%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    /* Error/Destructive */
+    --destructive: 4 78% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 15% 90%;
-    --input: 30 15% 90%;
-    --ring: 0 0% 15%;
+    /* Borders: Ultra subtle */
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 9%;
 
     /* Status colors */
-    --success: 142 50% 45%;
+    --success: 152 69% 42%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
 
-    /* Macro colors */
-    --macro-carbs: 142 50% 45%;
-    --macro-protein: 199 89% 48%;
+    /* Macro colors - refined */
+    --macro-carbs: 152 69% 42%;
+    --macro-protein: 217 91% 60%;
     --macro-fat: 38 92% 50%;
 
-    /* Friendly rounded corners */
-    --radius: 1.5rem;
+    /* Consistent rounded corners */
+    --radius: 1.25rem;
 
+    /* Sidebar (keeping for compatibility) */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 0 0% 15%;
+    --sidebar-foreground: 0 0% 4%;
+    --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 20% 94%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 30 15% 90%;
-    --sidebar-ring: 0 0% 15%;
+    --sidebar-accent: 40 20% 96%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 0% 9%;
   }
 
   .dark {
     --background: 0 0% 4%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 8%;
+    --card: 0 0% 7%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 8%;
+    --popover: 0 0% 7%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 142 50% 50%;
-    --primary-foreground: 0 0% 6%;
+    --primary: 152 69% 45%;
+    --primary-foreground: 0 0% 4%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 15%;
+    --muted: 0 0% 12%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 142 50% 50%;
-    --accent-foreground: 0 0% 6%;
+    --accent: 152 69% 45%;
+    --accent-foreground: 0 0% 4%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 142 50% 50%;
+    --ring: 152 69% 45%;
     
-    --success: 142 50% 50%;
+    --success: 152 69% 45%;
     --warning: 38 92% 50%;
-    --info: 199 89% 48%;
+    --info: 199 89% 55%;
 
-    --macro-carbs: 142 50% 50%;
-    --macro-protein: 199 89% 55%;
+    --macro-carbs: 152 69% 45%;
+    --macro-protein: 217 91% 65%;
     --macro-fat: 38 92% 55%;
 
-    --sidebar-background: 0 0% 6%;
+    --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 142 50% 50%;
-    --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 15%;
+    --sidebar-primary: 152 69% 45%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 142 50% 50%;
+    --sidebar-ring: 152 69% 45%;
   }
 }
 
@@ -120,42 +126,68 @@ All colors MUST be HSL.
   }
 
   body {
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
-      "Apple Color Emoji", "Segoe UI Emoji";
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     @apply bg-background text-foreground antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3 {
-    font-family: "Poppins", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Inter", ui-sans-serif, system-ui;
+    letter-spacing: -0.025em;
+  }
+
+  /* Hide scrollbars globally */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
-@layer utilities {
-  /* Soft card with shadow */
-  .soft-card {
-    @apply bg-card rounded-3xl;
-    box-shadow: 
-      0 2px 8px hsl(0 0% 0% / 0.04),
-      0 8px 24px hsl(0 0% 0% / 0.06);
+@layer components {
+  /* Premium card with subtle border and shadow */
+  .premium-card {
+    @apply bg-card rounded-[20px] border border-border;
+    box-shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.03);
   }
 
-  /* Pro banner gradient */
-  .pro-gradient {
-    background: linear-gradient(135deg, 
-      hsl(30 30% 95%) 0%, 
-      hsl(35 40% 92%) 50%,
-      hsl(30 30% 95%) 100%
-    );
+  /* Premium pill button */
+  .pill-button {
+    @apply h-12 px-6 rounded-full font-semibold text-sm transition-all;
   }
 
-  /* Macro chip styles */
-  .macro-chip {
-    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium;
-    background: hsl(var(--muted));
+  .pill-button-primary {
+    @apply pill-button bg-primary text-primary-foreground;
+  }
+
+  .pill-button-outline {
+    @apply pill-button bg-transparent border border-border text-foreground;
+  }
+
+  /* Category chip - minimal and clean */
+  .category-chip {
+    @apply flex items-center gap-2 px-4 py-2.5 rounded-full bg-secondary text-foreground text-sm font-medium transition-all;
+  }
+
+  .category-chip:hover {
+    @apply bg-secondary/80;
+  }
+
+  .category-chip-active {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  /* Macro badge - subtle pill style */
+  .macro-badge {
+    @apply inline-flex items-center gap-1.5 text-xs text-muted-foreground;
   }
 
   .macro-dot {
-    @apply w-3 h-3 rounded-full;
+    @apply w-2 h-2 rounded-full;
   }
 
   .macro-dot-carbs {
@@ -170,56 +202,92 @@ All colors MUST be HSL.
     background: hsl(var(--macro-fat));
   }
 
-  /* Category chip */
-  .category-chip {
-    @apply flex flex-col items-center gap-2 px-4 py-3 rounded-2xl bg-card border border-border;
-    min-width: 72px;
-  }
-
-  .category-chip-icon {
-    @apply w-10 h-10 rounded-xl flex items-center justify-center text-xl;
-  }
-
-  /* Healthy score bar */
+  /* Health score bar */
   .health-bar {
-    @apply h-2 rounded-full overflow-hidden;
-    background: hsl(var(--muted));
+    @apply h-2 rounded-full overflow-hidden bg-secondary;
   }
 
   .health-bar-fill {
-    @apply h-full rounded-full transition-all duration-500;
-    background: linear-gradient(90deg, 
-      hsl(var(--macro-carbs)) 0%, 
-      hsl(var(--macro-protein)) 50%,
-      hsl(var(--macro-fat)) 100%
-    );
+    @apply h-full rounded-full transition-all duration-700;
+    background: hsl(var(--accent));
   }
 
-  /* Press feel */
-  .pressable {
-    @apply transition-transform duration-150 active:scale-[0.97];
+  /* Skeleton shimmer loading */
+  .skeleton {
+    @apply bg-secondary rounded-xl;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--secondary)) 0%,
+      hsl(0 0% 95%) 50%,
+      hsl(var(--secondary)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
   }
 
   /* Recipe card */
   .recipe-card {
-    @apply soft-card overflow-hidden;
+    @apply premium-card overflow-hidden transition-transform duration-150;
   }
 
-  /* Shimmer loading */
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--muted)),
-      hsl(30 20% 96%),
-      hsl(var(--muted))
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
+  .recipe-card:active {
+    transform: scale(0.98);
   }
 
-  /* Star rating */
-  .star-rating {
-    @apply inline-flex items-center gap-0.5;
+  /* Input field - premium style */
+  .premium-input {
+    @apply w-full h-14 px-5 rounded-full bg-secondary border-0 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all;
+  }
+
+  /* Stats block */
+  .stats-block {
+    @apply flex flex-col items-center justify-center p-4 rounded-2xl bg-secondary;
+  }
+
+  /* Tab pill selector */
+  .tab-pill-container {
+    @apply inline-flex p-1 rounded-full bg-secondary;
+  }
+
+  .tab-pill {
+    @apply px-5 py-2 rounded-full text-sm font-medium transition-all;
+  }
+
+  .tab-pill-active {
+    @apply bg-card text-foreground shadow-sm;
+  }
+
+  .tab-pill-inactive {
+    @apply text-muted-foreground;
+  }
+}
+
+@layer utilities {
+  /* Micro-interaction: press effect */
+  .pressable {
+    @apply transition-transform duration-100 active:scale-[0.95];
+  }
+
+  /* Text utilities */
+  .text-display {
+    @apply text-[22px] font-semibold tracking-tight;
+  }
+
+  .text-section {
+    @apply text-[17px] font-semibold tracking-tight;
+  }
+
+  .text-body {
+    @apply text-[15px] leading-relaxed;
+  }
+
+  .text-caption {
+    @apply text-[13px] text-muted-foreground;
+  }
+
+  /* Number display - bold and clear */
+  .text-number {
+    @apply font-bold tabular-nums;
   }
 }
 

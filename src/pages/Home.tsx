@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Bell, Star, ChevronRight, Sparkles, Loader2, X, Clock, Users, Leaf, Heart, Calendar } from "lucide-react";
+import { Search, ChevronRight, Loader2, X, Clock, Users, Leaf, Heart } from "lucide-react";
 import { MobileNav } from "@/components/MobileNav";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -88,17 +88,16 @@ export default function Home() {
     },
   });
 
-  const userName = profile?.name || profile?.email?.split("@")[0] || "User";
+  const userName = profile?.name || profile?.email?.split("@")[0] || "there";
 
   const categories = [
-    { name: "Vegan", emoji: "🥬", color: "bg-green-100" },
-    { name: "Carb", emoji: "🍞", color: "bg-amber-100" },
-    { name: "Protein", emoji: "🥩", color: "bg-red-100" },
-    { name: "Snacks", emoji: "🍪", color: "bg-orange-100" },
-    { name: "Drink", emoji: "🥤", color: "bg-blue-100" },
+    { name: "Vegan", icon: "🥬" },
+    { name: "High Protein", icon: "🥩" },
+    { name: "Low Carb", icon: "🥗" },
+    { name: "Quick Meals", icon: "⚡" },
+    { name: "Smoothies", icon: "🥤" },
   ];
 
-  // Default recipe suggestions
   const defaultRecipes = [
     {
       name: "Mediterranean Quinoa Bowl",
@@ -132,8 +131,8 @@ export default function Home() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       toast({
-        title: "Please enter a food",
-        description: "Type a food name like 'chicken biryani' or 'smoothie bowl'",
+        title: "Enter a food",
+        description: "Type something like 'chicken salad' or 'smoothie bowl'",
         variant: "destructive",
       });
       return;
@@ -160,7 +159,7 @@ export default function Home() {
 
       if (!response.ok) {
         if (response.status === 429) {
-          toast({ title: "Too many requests", description: "Please wait a moment and try again.", variant: "destructive" });
+          toast({ title: "Too many requests", description: "Please wait a moment.", variant: "destructive" });
         } else if (response.status === 402) {
           toast({ title: "Credits needed", description: "AI service requires credits.", variant: "destructive" });
         } else {
@@ -229,86 +228,73 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pb-28">
-      <div className="container mx-auto px-4 pt-12 max-w-md">
+      <div className="px-5 pt-14 max-w-md mx-auto">
         {/* Header */}
         <motion.header 
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center justify-between mb-6"
+          className="flex items-center justify-between mb-8"
         >
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-muted overflow-hidden border-2 border-border">
+            <div className="w-11 h-11 rounded-full bg-secondary overflow-hidden">
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-xl">👤</div>
+                <div className="w-full h-full flex items-center justify-center text-lg font-semibold text-muted-foreground">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
               )}
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Good morning</p>
-              <h1 className="text-lg font-semibold">Hello, {userName}</h1>
+              <p className="text-caption">Good morning</p>
+              <h1 className="text-section">Hello, {userName}</h1>
             </div>
           </div>
-
-          <button className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center pressable">
-            <Bell className="w-5 h-5 text-muted-foreground" />
-          </button>
         </motion.header>
 
         {/* Search Bar */}
         <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-          className="mb-6"
+          transition={{ duration: 0.3, delay: 0.05 }}
+          className="mb-8"
         >
           <div className="relative">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Describe Your Food (e.g. chicken biryani)"
-              className="w-full h-14 pl-5 pr-32 rounded-2xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder="Search for recipes..."
+              className="premium-input pl-14 pr-24"
             />
             <Button
               onClick={handleSearch}
               disabled={isSearching}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-4 rounded-xl"
+              size="sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-5 rounded-full"
             >
-              {isSearching ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Assistant
-                </>
-              )}
+              {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
             </Button>
           </div>
         </motion.div>
 
-        {/* Pro Banner */}
+        {/* Premium Banner */}
         {!profile?.is_premium && (
           <motion.div
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="mb-6"
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="mb-8"
           >
-            <div className="pro-gradient soft-card p-5 flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground mb-1">Get Pro Access</h3>
-                <p className="text-sm text-muted-foreground">Unlock unlimited AI scans</p>
+            <div className="premium-card p-5 flex items-center justify-between">
+              <div>
+                <p className="text-section mb-0.5">Unlock Premium</p>
+                <p className="text-caption">Unlimited scans & insights</p>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-card rounded-full px-2 py-1">
-                  <Star className="w-3 h-3 text-warning fill-warning" />
-                  <span className="text-xs font-medium">4.8</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </div>
           </motion.div>
         )}
@@ -317,15 +303,10 @@ export default function Home() {
         <motion.section
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
+          transition={{ duration: 0.3, delay: 0.15 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Categories</h2>
-            <button className="text-sm text-muted-foreground">See all</button>
-          </div>
-          
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5">
             {categories.map((category, i) => (
               <motion.button
                 key={category.name}
@@ -335,13 +316,11 @@ export default function Home() {
                 }}
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.2, delay: 0.25 + i * 0.05 }}
-                className="category-chip pressable flex-shrink-0"
+                transition={{ duration: 0.2, delay: 0.2 + i * 0.03 }}
+                className="category-chip flex-shrink-0 pressable"
               >
-                <div className={`category-chip-icon ${category.color}`}>
-                  {category.emoji}
-                </div>
-                <span className="text-xs font-medium text-muted-foreground">{category.name}</span>
+                <span>{category.icon}</span>
+                <span>{category.name}</span>
               </motion.button>
             ))}
           </div>
@@ -352,12 +331,12 @@ export default function Home() {
           <motion.section
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
             className="mb-8"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Today's Meals</h2>
-              <button onClick={() => navigate("/log")} className="text-sm text-muted-foreground">See all</button>
+              <h2 className="text-section">Today's Meals</h2>
+              <button onClick={() => navigate("/log")} className="text-caption">See all</button>
             </div>
 
             <div className="space-y-3">
@@ -366,32 +345,32 @@ export default function Home() {
                   key={meal.id}
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.35 + i * 0.1 }}
-                  className="soft-card p-4 flex items-center gap-4 pressable"
+                  transition={{ duration: 0.3, delay: 0.25 + i * 0.05 }}
+                  className="premium-card p-4 flex items-center gap-4 pressable"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-xl">
+                  <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-xl">
                     🍽️
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium truncate text-sm">{meal.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="macro-chip text-xs">
-                        <span className="macro-dot macro-dot-carbs" />
-                        {Number(meal.carbs).toFixed(0)}g
-                      </span>
-                      <span className="macro-chip text-xs">
+                    <h3 className="font-medium text-[15px] truncate mb-1">{meal.name}</h3>
+                    <div className="flex items-center gap-3">
+                      <span className="macro-badge">
                         <span className="macro-dot macro-dot-protein" />
                         {Number(meal.protein).toFixed(0)}g
                       </span>
-                      <span className="macro-chip text-xs">
+                      <span className="macro-badge">
+                        <span className="macro-dot macro-dot-carbs" />
+                        {Number(meal.carbs).toFixed(0)}g
+                      </span>
+                      <span className="macro-badge">
                         <span className="macro-dot macro-dot-fat" />
                         {Number(meal.fats).toFixed(0)}g
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-lg font-bold">{meal.calories}</span>
-                    <span className="text-xs text-muted-foreground ml-1">cal</span>
+                    <span className="text-lg text-number">{meal.calories}</span>
+                    <span className="text-caption ml-1">cal</span>
                   </div>
                 </motion.div>
               ))}
@@ -403,31 +382,40 @@ export default function Home() {
         <motion.section
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.35 }}
+          transition={{ duration: 0.3, delay: 0.25 }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">
-              {aiRecipes ? `Recipes for "${searchQuery}"` : "Recipe Suggestions"}
+            <h2 className="text-section">
+              {aiRecipes ? `Results for "${searchQuery}"` : "Recipe Ideas"}
             </h2>
             {aiRecipes && (
               <button 
                 onClick={() => { setAiRecipes(null); setSearchQuery(""); }}
-                className="text-sm text-muted-foreground"
+                className="text-caption flex items-center gap-1"
               >
+                <X className="w-3 h-3" />
                 Clear
               </button>
             )}
           </div>
 
           {isSearching ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-              <p className="text-muted-foreground">Finding healthy recipes...</p>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="premium-card p-4 flex gap-4">
+                  <div className="skeleton w-24 h-24 rounded-2xl" />
+                  <div className="flex-1 space-y-3 py-1">
+                    <div className="skeleton h-5 w-3/4 rounded-lg" />
+                    <div className="skeleton h-4 w-1/2 rounded-lg" />
+                    <div className="skeleton h-4 w-2/3 rounded-lg" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : noResults ? (
-            <div className="text-center py-12">
-              <p className="text-xl mb-2">🍽️</p>
-              <p className="text-muted-foreground">No recipes found. Try a different food!</p>
+            <div className="text-center py-16">
+              <p className="text-display mb-2">No recipes found</p>
+              <p className="text-caption">Try a different search term</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -435,11 +423,11 @@ export default function Home() {
                 {displayRecipes.map((recipe, i) => (
                   <motion.div
                     key={recipe.name + i}
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: 20, opacity: 0 }}
-                    transition={{ duration: 0.3, delay: i * 0.1 }}
-                    className="recipe-card flex gap-4 p-3 pressable"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    transition={{ duration: 0.3, delay: i * 0.05 }}
+                    className="recipe-card flex gap-4 p-4"
                   >
                     <img
                       src={recipe.image}
@@ -449,33 +437,32 @@ export default function Home() {
                         e.currentTarget.src = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&auto=format&fit=crop";
                       }}
                     />
-                    <div className="flex-1 flex flex-col justify-center min-w-0">
-                      <h3 className="font-medium mb-1 truncate">{recipe.name}</h3>
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-xs text-muted-foreground">
-                          {typeof recipe.calories === "number" ? recipe.calories : recipe.calories} cal
-                        </span>
-                        <span className="text-xs text-muted-foreground">•</span>
-                        <span className="text-xs text-muted-foreground">P: {recipe.protein}</span>
-                        <span className="text-xs text-muted-foreground">C: {recipe.carbs}</span>
-                        <span className="text-xs text-muted-foreground">F: {recipe.fat}</span>
+                    <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5">
+                      <div>
+                        <h3 className="font-semibold text-[15px] mb-1 line-clamp-1">{recipe.name}</h3>
+                        <p className="text-caption line-clamp-1 mb-2">{recipe.summary}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{recipe.summary}</p>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => handleTellMeRecipe(recipe)}
-                          className="text-sm text-accent font-medium"
-                        >
-                          Tell me Recipe →
-                        </button>
-                        <button
-                          onClick={() => toggleFavorite(recipe)}
-                          className={`p-1.5 rounded-full transition-colors ${
-                            isFavorite(recipe.name) ? "text-red-500" : "text-muted-foreground hover:text-red-500"
-                          }`}
-                        >
-                          <Heart className={`w-4 h-4 ${isFavorite(recipe.name) ? "fill-current" : ""}`} />
-                        </button>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium">{recipe.calories} cal</span>
+                          <span className="macro-badge">P: {recipe.protein}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleTellMeRecipe(recipe)}
+                            className="text-sm font-medium text-accent pressable"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => toggleFavorite(recipe)}
+                            className="p-1.5 pressable"
+                          >
+                            <Heart className={`w-4 h-4 transition-colors ${
+                              isFavorite(recipe.name) ? "text-destructive fill-destructive" : "text-muted-foreground"
+                            }`} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -488,41 +475,46 @@ export default function Home() {
 
       {/* Recipe Details Modal */}
       <Dialog open={showRecipeModal} onOpenChange={setShowRecipeModal}>
-        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto rounded-3xl">
           <DialogHeader>
-            <DialogTitle className="text-xl">{selectedRecipe?.name}</DialogTitle>
+            <DialogTitle className="text-display">{selectedRecipe?.name}</DialogTitle>
           </DialogHeader>
 
           {isLoadingDetails ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-              <p className="text-muted-foreground">Loading recipe details...</p>
+            <div className="space-y-4 py-8">
+              <div className="skeleton h-6 w-2/3 rounded-lg mx-auto" />
+              <div className="skeleton h-4 w-1/2 rounded-lg mx-auto" />
+              <div className="space-y-2 mt-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="skeleton h-4 w-full rounded-lg" />
+                ))}
+              </div>
             </div>
           ) : recipeDetails ? (
             <div className="space-y-6">
               {/* Time & Servings */}
               <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>Prep: {recipeDetails.prepTime}</span>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>{recipeDetails.prepTime} prep</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>Cook: {recipeDetails.cookTime}</span>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>{recipeDetails.cookTime} cook</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-muted-foreground" />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Users className="w-4 h-4" />
                   <span>{recipeDetails.servings} servings</span>
                 </div>
               </div>
 
               {/* Ingredients */}
               <div>
-                <h3 className="font-semibold mb-3">Ingredients</h3>
+                <h3 className="text-section mb-3">Ingredients</h3>
                 <ul className="space-y-2">
                   {recipeDetails.ingredients?.map((ing, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                    <li key={i} className="flex items-start gap-3 text-body">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent mt-2 shrink-0" />
                       <span>
                         <strong>{ing.amount}</strong> {ing.item}
                         {ing.notes && <span className="text-muted-foreground"> ({ing.notes})</span>}
@@ -534,11 +526,11 @@ export default function Home() {
 
               {/* Instructions */}
               <div>
-                <h3 className="font-semibold mb-3">Instructions</h3>
-                <ol className="space-y-3">
+                <h3 className="text-section mb-3">Instructions</h3>
+                <ol className="space-y-4">
                   {recipeDetails.instructions?.map((step, i) => (
-                    <li key={i} className="flex gap-3 text-sm">
-                      <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-medium shrink-0">
+                    <li key={i} className="flex gap-3 text-body">
+                      <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold shrink-0">
                         {i + 1}
                       </span>
                       <span className="pt-0.5">{step}</span>
@@ -550,17 +542,17 @@ export default function Home() {
               {/* Substitutes */}
               {recipeDetails.substitutes && recipeDetails.substitutes.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <h3 className="text-section mb-3 flex items-center gap-2">
                     <Leaf className="w-4 h-4 text-accent" />
-                    Substitution Tips
+                    Substitutions
                   </h3>
                   <ul className="space-y-2">
                     {recipeDetails.substitutes.map((sub, i) => (
-                      <li key={i} className="text-sm bg-muted/50 rounded-lg p-3">
+                      <li key={i} className="text-body bg-secondary rounded-xl p-3">
                         <span className="font-medium">{sub.original}</span>
-                        <span className="mx-2">→</span>
+                        <span className="mx-2 text-muted-foreground">→</span>
                         <span className="text-accent font-medium">{sub.substitute}</span>
-                        {sub.notes && <p className="text-muted-foreground mt-1 text-xs">{sub.notes}</p>}
+                        {sub.notes && <p className="text-caption mt-1">{sub.notes}</p>}
                       </li>
                     ))}
                   </ul>
@@ -569,9 +561,9 @@ export default function Home() {
 
               {/* Nutrition Tips */}
               {recipeDetails.nutritionTips && (
-                <div className="bg-accent/10 rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">
-                    💡 <strong>Health Tip:</strong> {recipeDetails.nutritionTips}
+                <div className="bg-accent/10 rounded-xl p-4">
+                  <p className="text-body">
+                    <strong>Tip:</strong> {recipeDetails.nutritionTips}
                   </p>
                 </div>
               )}

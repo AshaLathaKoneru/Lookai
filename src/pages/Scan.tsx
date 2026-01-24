@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Image as ImageIcon, Camera, RefreshCw, Sparkles } from "lucide-react";
+import { X, Image as ImageIcon, Camera, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -65,7 +65,6 @@ export default function Scan() {
     [todayUsage?.scan_count]
   );
 
-  // Start camera
   const startCamera = useCallback(async () => {
     try {
       setCameraError(null);
@@ -228,8 +227,8 @@ export default function Scan() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Meal Analyzed!",
-        description: `Found: ${data.name}`,
+        title: "Analysis Complete",
+        description: `Identified: ${data.name}`,
       });
       queryClient.invalidateQueries({ queryKey: ["scan-usage"] });
       navigate("/meal-preview", { state: { mealData: data, image: preview } });
@@ -278,19 +277,19 @@ export default function Scan() {
           <motion.div 
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-12"
+            className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 pt-14"
           >
             <button
               onClick={handleClose}
-              className="w-11 h-11 rounded-full bg-card/20 backdrop-blur-md flex items-center justify-center pressable"
+              className="w-11 h-11 rounded-full bg-background/20 backdrop-blur-md flex items-center justify-center pressable"
             >
-              <X className="w-5 h-5 text-card" />
+              <X className="w-5 h-5 text-background" />
             </button>
             <button
               onClick={switchCamera}
-              className="w-11 h-11 rounded-full bg-card/20 backdrop-blur-md flex items-center justify-center pressable"
+              className="w-11 h-11 rounded-full bg-background/20 backdrop-blur-md flex items-center justify-center pressable"
             >
-              <RefreshCw className="w-5 h-5 text-card" />
+              <RefreshCw className="w-5 h-5 text-background" />
             </button>
           </motion.div>
 
@@ -311,12 +310,12 @@ export default function Scan() {
             {/* Camera error */}
             {cameraError && activeTab === "scan" && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-foreground px-6 text-center z-20">
-                <div className="w-16 h-16 rounded-full bg-card/10 flex items-center justify-center mb-4">
-                  <Camera className="w-8 h-8 text-card/60" />
+                <div className="w-16 h-16 rounded-full bg-background/10 flex items-center justify-center mb-4">
+                  <Camera className="w-8 h-8 text-background/60" />
                 </div>
-                <p className="text-card/80 mb-2">Camera access required</p>
-                <p className="text-sm text-card/50 mb-4">{cameraError}</p>
-                <Button onClick={startCamera} variant="secondary">
+                <p className="text-background/80 font-medium mb-2">Camera access required</p>
+                <p className="text-sm text-background/50 mb-4">{cameraError}</p>
+                <Button onClick={startCamera} variant="secondary" className="rounded-full">
                   Try Again
                 </Button>
               </div>
@@ -330,11 +329,10 @@ export default function Scan() {
               className="absolute inset-0 flex items-center justify-center pointer-events-none"
             >
               <div className="w-72 h-72 relative">
-                {/* Corner brackets */}
-                <div className="absolute left-0 top-0 w-16 h-16 border-l-4 border-t-4 border-card rounded-tl-3xl" />
-                <div className="absolute right-0 top-0 w-16 h-16 border-r-4 border-t-4 border-card rounded-tr-3xl" />
-                <div className="absolute left-0 bottom-0 w-16 h-16 border-l-4 border-b-4 border-card rounded-bl-3xl" />
-                <div className="absolute right-0 bottom-0 w-16 h-16 border-r-4 border-b-4 border-card rounded-br-3xl" />
+                <div className="absolute left-0 top-0 w-16 h-16 border-l-[3px] border-t-[3px] border-background rounded-tl-3xl" />
+                <div className="absolute right-0 top-0 w-16 h-16 border-r-[3px] border-t-[3px] border-background rounded-tr-3xl" />
+                <div className="absolute left-0 bottom-0 w-16 h-16 border-l-[3px] border-b-[3px] border-background rounded-bl-3xl" />
+                <div className="absolute right-0 bottom-0 w-16 h-16 border-r-[3px] border-b-[3px] border-background rounded-br-3xl" />
               </div>
             </motion.div>
 
@@ -344,9 +342,9 @@ export default function Scan() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-card/20 backdrop-blur-md"
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-background/20 backdrop-blur-md"
               >
-                <span className="text-sm text-card font-medium">{scansLeft} scans left today</span>
+                <span className="text-sm text-background font-medium">{scansLeft} scans remaining</span>
               </motion.div>
             )}
           </div>
@@ -356,27 +354,23 @@ export default function Scan() {
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4 }}
-            className="bg-background px-6 py-8 rounded-t-3xl -mt-6 relative z-10"
+            className="bg-background px-6 py-8 rounded-t-[2rem] -mt-6 relative z-10"
           >
             <div className="text-center mb-6">
-              <h2 className="text-xl font-bold mb-1">Scan Your Food</h2>
-              <p className="text-sm text-muted-foreground">Position your meal in the frame</p>
+              <h2 className="text-display mb-1">Scan Your Meal</h2>
+              <p className="text-caption">Position your food in the frame</p>
             </div>
 
             {/* Tab toggle */}
             <div className="flex justify-center mb-8">
-              <div className="flex items-center p-1 rounded-full bg-muted">
+              <div className="tab-pill-container">
                 <button
                   onClick={() => {
                     setActiveTab("scan");
                     if (!cameraActive) startCamera();
                   }}
                   disabled={!canScan}
-                  className={`h-10 px-6 rounded-full text-sm font-semibold transition-all ${
-                    activeTab === "scan"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground"
-                  }`}
+                  className={`tab-pill ${activeTab === "scan" ? "tab-pill-active" : "tab-pill-inactive"}`}
                 >
                   Camera
                 </button>
@@ -387,11 +381,7 @@ export default function Scan() {
                     openUploadPicker();
                   }}
                   disabled={!canScan}
-                  className={`h-10 px-6 rounded-full text-sm font-semibold transition-all ${
-                    activeTab === "upload"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground"
-                  }`}
+                  className={`tab-pill ${activeTab === "upload" ? "tab-pill-active" : "tab-pill-inactive"}`}
                 >
                   Upload
                 </button>
@@ -403,7 +393,7 @@ export default function Scan() {
               <button
                 onClick={openUploadPicker}
                 disabled={!canScan}
-                className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center pressable"
+                className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center pressable"
               >
                 <ImageIcon className="w-6 h-6 text-muted-foreground" />
               </button>
@@ -411,12 +401,12 @@ export default function Scan() {
               <button
                 onClick={capturePhoto}
                 disabled={!canScan || !cameraActive}
-                className="w-20 h-20 rounded-full bg-primary flex items-center justify-center pressable shadow-lg disabled:opacity-50"
+                className="w-20 h-20 rounded-full bg-primary flex items-center justify-center pressable disabled:opacity-50"
               >
                 <div className="w-16 h-16 rounded-full border-4 border-primary-foreground" />
               </button>
 
-              <div className="w-14 h-14" /> {/* Spacer */}
+              <div className="w-14 h-14" />
             </div>
           </motion.div>
         </div>
@@ -427,24 +417,24 @@ export default function Scan() {
           <motion.div 
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="px-4 pt-12 pb-4 flex items-center justify-between"
+            className="px-5 pt-14 pb-4 flex items-center justify-between"
           >
             <button
               onClick={handleRetake}
-              className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center pressable"
+              className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center pressable"
             >
               <X className="w-5 h-5" />
             </button>
-            <h1 className="text-base font-semibold">Preview</h1>
+            <h1 className="text-section">Preview</h1>
             <div className="w-11" />
           </motion.div>
 
           {/* Image preview */}
-          <div className="flex-1 px-4 pb-4">
+          <div className="flex-1 px-5 pb-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="h-full rounded-3xl overflow-hidden bg-muted"
+              className="h-full rounded-3xl overflow-hidden bg-secondary"
             >
               <img
                 src={preview}
@@ -459,13 +449,15 @@ export default function Scan() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-30"
+              className="absolute inset-0 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center z-30"
             >
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+              <div className="space-y-4 text-center">
+                <div className="w-16 h-16 mx-auto rounded-full border-4 border-secondary border-t-primary animate-spin" />
+                <div>
+                  <p className="text-section">Analyzing meal...</p>
+                  <p className="text-caption mt-1">Identifying nutrients</p>
+                </div>
               </div>
-              <p className="text-lg font-semibold">Analyzing your meal...</p>
-              <p className="text-sm text-muted-foreground mt-1">AI is identifying nutrients</p>
             </motion.div>
           )}
 
@@ -473,23 +465,22 @@ export default function Scan() {
           <motion.div 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="p-4 pb-8"
+            className="p-5 pb-10"
           >
             <div className="flex gap-3">
               <Button
                 variant="outline"
                 onClick={handleRetake}
-                className="flex-1 h-14 rounded-full text-base font-semibold"
+                className="flex-1 h-14 rounded-full text-[15px] font-semibold"
               >
                 Retake
               </Button>
               <Button
                 onClick={() => analyzeMutation.mutate()}
                 disabled={analyzing || !canScan}
-                className="flex-1 h-14 rounded-full text-base font-semibold"
+                className="flex-1 h-14 rounded-full text-[15px] font-semibold"
               >
-                <Sparkles className="w-5 h-5 mr-2" />
-                Analyze
+                {analyzing ? "Analyzing..." : "Analyze"}
               </Button>
             </div>
           </motion.div>
