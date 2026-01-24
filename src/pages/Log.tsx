@@ -109,9 +109,21 @@ export default function Log() {
                         className="premium-card p-4 pressable"
                       >
                         <div className="flex items-center gap-4">
-                          {/* Food Icon */}
-                          <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-xl flex-shrink-0">
-                            🍽️
+                          {/* Food Image */}
+                          <div className="w-14 h-14 rounded-2xl bg-secondary flex-shrink-0 overflow-hidden">
+                            {meal.image_url ? (
+                              <img 
+                                src={meal.image_url} 
+                                alt={meal.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  e.currentTarget.parentElement!.innerHTML = '<span class="flex items-center justify-center w-full h-full text-xl">🍽️</span>';
+                                }}
+                              />
+                            ) : (
+                              <span className="flex items-center justify-center w-full h-full text-xl">🍽️</span>
+                            )}
                           </div>
 
                           {/* Content */}
