@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Pencil, Check, Plus, Flame, Info } from "lucide-react";
+import { X, Pencil, Check, Plus, Flame, Info } from "lucide-react";
 
 export default function MealPreview() {
   const location = useLocation();
@@ -77,10 +77,10 @@ export default function MealPreview() {
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-12 pb-4">
         <button
-          onClick={() => navigate("/scan")}
+          onClick={() => navigate("/")}
           className="w-12 h-12 rounded-full border border-border/50 bg-background/60 backdrop-blur-md flex items-center justify-center pressable"
         >
-          <ArrowLeft className="w-5 h-5 text-foreground" />
+          <X className="w-5 h-5 text-foreground" />
         </button>
         <span className="text-sm font-semibold tracking-[0.2em] text-muted-foreground">
           SCAN PREVIEW

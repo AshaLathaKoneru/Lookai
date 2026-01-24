@@ -89,7 +89,10 @@ export default function Profile() {
       {/* Header */}
       <div className="px-4 pt-12 pb-6 flex items-center justify-between">
         <h1 className="text-xl font-semibold tracking-wide">My Profile</h1>
-        <button className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center">
+        <button 
+          onClick={() => navigate("/settings")}
+          className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center pressable"
+        >
           <Settings className="w-5 h-5 text-muted-foreground" />
         </button>
       </div>
@@ -99,8 +102,12 @@ export default function Profile() {
         <div className="trading-card rounded-[28px] p-6 text-center">
           {/* Avatar */}
           <div className="relative w-24 h-24 mx-auto mb-4">
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center border-2 border-primary/50">
-              <span className="text-4xl">👤</span>
+            <div className="w-full h-full rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center border-2 border-primary/50 overflow-hidden">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-4xl">👤</span>
+              )}
             </div>
             {profile?.is_premium && (
               <div className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center">
