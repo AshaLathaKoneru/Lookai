@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -9,6 +9,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useFavoriteRecipes } from "@/hooks/useFavoriteRecipes";
+import { CalorieRing } from "@/components/CalorieRing";
+import { AIChatBot } from "@/components/AIChatBot";
+import { FoodSearch } from "@/components/FoodSearch";
+import { FoodItem } from "@/data/foodDatabase";
 import {
   Dialog,
   DialogContent,
@@ -89,14 +93,12 @@ export default function Home() {
   });
 
   const userName = profile?.name || profile?.email?.split("@")[0] || "there";
-
-  const categories = [
-    { name: "Vegan", icon: "🥬" },
-    { name: "High Protein", icon: "🥩" },
-    { name: "Low Carb", icon: "🥗" },
-    { name: "Quick Meals", icon: "⚡" },
-    { name: "Smoothies", icon: "🥤" },
-  ];
+  const calorieGoal = profile?.calorie_goal || 2000;
+  
+  // Calculate consumed calories from today's meals
+  const consumedCalories = useMemo(() => {
+    return todayMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0);
+  }, [todayMeals]);
 
   const defaultRecipes = [
     {
@@ -224,6 +226,13 @@ export default function Home() {
     }
   };
 
+  const handleFoodSelect = (food: FoodItem) => {
+    toast({
+      title: food.name,
+      description: `${food.kcalPerGram} kcal/g • ${food.category} • ${food.region}`,
+    });
+  };
+
   const displayRecipes = aiRecipes || defaultRecipes;
 
   return (
@@ -234,7 +243,7 @@ export default function Home() {
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center justify-between mb-8"
+          className="flex items-center justify-between mb-6"
         >
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-full bg-secondary overflow-hidden">
@@ -251,13 +260,35 @@ export default function Home() {
               <h1 className="text-section">Hello, {userName}</h1>
             </div>
           </div>
+          {/* AI Chatbot Button */}
+          <AIChatBot />
         </motion.header>
 
-        {/* Search Bar */}
+        {/* Calorie Ring Widget */}
+        <motion.section
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+          className="flex justify-center mb-8"
+        >
+          <CalorieRing consumed={consumedCalories} goal={calorieGoal} />
+        </motion.section>
+
+        {/* Food Database Search */}
         <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.05 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="mb-6"
+        >
+          <FoodSearch onSelect={handleFoodSelect} />
+        </motion.div>
+
+        {/* Recipe Search Bar */}
+        <motion.div
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.15 }}
           className="mb-8"
         >
           <div className="relative">
@@ -286,10 +317,13 @@ export default function Home() {
           <motion.div
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
             className="mb-8"
           >
-            <div className="premium-card p-5 flex items-center justify-between">
+            <div 
+              className="premium-card p-5 flex items-center justify-between pressable"
+              onClick={() => navigate("/profile")}
+            >
               <div>
                 <p className="text-section mb-0.5">Unlock Premium</p>
                 <p className="text-caption">Unlimited scans & insights</p>
@@ -299,39 +333,12 @@ export default function Home() {
           </motion.div>
         )}
 
-        {/* Categories */}
-        <motion.section
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.15 }}
-          className="mb-8"
-        >
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5">
-            {categories.map((category, i) => (
-              <motion.button
-                key={category.name}
-                onClick={() => {
-                  setSearchQuery(category.name.toLowerCase());
-                  handleSearch();
-                }}
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.2, delay: 0.2 + i * 0.03 }}
-                className="category-chip flex-shrink-0 pressable"
-              >
-                <span>{category.icon}</span>
-                <span>{category.name}</span>
-              </motion.button>
-            ))}
-          </div>
-        </motion.section>
-
         {/* Today's Meals */}
         {todayMeals.length > 0 && (
           <motion.section
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
+            transition={{ duration: 0.3, delay: 0.25 }}
             className="mb-8"
           >
             <div className="flex items-center justify-between mb-4">
@@ -345,11 +352,15 @@ export default function Home() {
                   key={meal.id}
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.25 + i * 0.05 }}
+                  transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
                   className="premium-card p-4 flex items-center gap-4 pressable"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-xl">
-                    🍽️
+                  <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-xl overflow-hidden">
+                    {meal.image_url ? (
+                      <img src={meal.image_url} alt={meal.name} className="w-full h-full object-cover" />
+                    ) : (
+                      "🍽️"
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-[15px] truncate mb-1">{meal.name}</h3>
@@ -382,7 +393,7 @@ export default function Home() {
         <motion.section
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.25 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section">

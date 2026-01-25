@@ -4,7 +4,7 @@ import { MobileNav } from "@/components/MobileNav";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronRight, Settings, LogOut, Target, Camera } from "lucide-react";
+import { ChevronRight, Settings, LogOut, Target, Camera, Crown, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -78,6 +78,7 @@ export default function Profile() {
   };
 
   const userName = profile?.name || profile?.email?.split("@")[0] || "User";
+  const bonusScans = profile?.bonus_scans || 0;
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -128,6 +129,69 @@ export default function Profile() {
               <div className="text-caption">Day Streak</div>
             </div>
           </div>
+
+          {/* Bonus Scans Badge */}
+          {bonusScans > 0 && (
+            <div className="mt-4 inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-full text-sm font-medium">
+              <Camera className="w-4 h-4" />
+              {bonusScans} Bonus Scans
+            </div>
+          )}
+        </motion.div>
+
+        {/* Premium Subscription Card */}
+        <motion.div 
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.08 }}
+          className="mb-4"
+        >
+          {profile?.is_premium ? (
+            <div className="premium-card p-5 bg-gradient-to-r from-accent/10 to-accent/5 border-accent/20">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center">
+                  <Crown className="w-6 h-6 text-accent" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-[15px] text-foreground">Premium Member</h3>
+                  <p className="text-caption">Unlimited scans & features</p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
+                  <Check className="w-4 h-4 text-white" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="premium-card p-5 overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent" />
+              <div className="relative">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center">
+                    <Crown className="w-6 h-6 text-accent" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-[15px] text-foreground">Upgrade to Premium</h3>
+                    <p className="text-caption">Unlock all features</p>
+                  </div>
+                </div>
+                
+                <ul className="space-y-2 mb-4">
+                  {["Unlimited food scans", "AI nutrition insights", "Priority support"].map((feature, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="w-4 h-4 rounded-full bg-accent/20 flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 text-accent" />
+                      </div>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <Button className="w-full h-12 rounded-xl font-semibold">
+                  Subscribe Now
+                </Button>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Daily Goal */}
