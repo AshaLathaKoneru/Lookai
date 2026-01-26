@@ -1,17 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Search, ChevronRight, Loader2, X, Clock, Users, Leaf, Heart } from "lucide-react";
+import { ChevronRight, Loader2, X, Clock, Users, Leaf, Heart } from "lucide-react";
 import { MobileNav } from "@/components/MobileNav";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useFavoriteRecipes } from "@/hooks/useFavoriteRecipes";
 import { CalorieRing } from "@/components/CalorieRing";
-import { AIChatBot } from "@/components/AIChatBot";
-import { FoodSearch } from "@/components/FoodSearch";
+import { AIChatBot, AIChatBotRef } from "@/components/AIChatBot";
+import { UnifiedSearch } from "@/components/UnifiedSearch";
 import { FoodItem } from "@/data/foodDatabase";
 import {
   Dialog,
@@ -55,6 +54,8 @@ export default function Home() {
   const [recipeDetails, setRecipeDetails] = useState<RecipeDetails | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
+  
+  const aiChatRef = useRef<AIChatBotRef>(null);
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -130,16 +131,10 @@ export default function Home() {
     },
   ];
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      toast({
-        title: "Enter a food",
-        description: "Type something like 'chicken salad' or 'smoothie bowl'",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleRecipeSearch = async (query: string) => {
+    if (!query.trim()) return;
+    
+    setSearchQuery(query);
     setIsSearching(true);
     setNoResults(false);
     setAiRecipes(null);
@@ -153,7 +148,7 @@ export default function Home() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ query: searchQuery }),
+          body: JSON.stringify({ query }),
         }
       );
 
@@ -185,6 +180,10 @@ export default function Home() {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleAIQuestion = (question: string) => {
+    aiChatRef.current?.sendMessage(question);
   };
 
   const handleTellMeRecipe = async (recipe: Recipe) => {
@@ -260,8 +259,8 @@ export default function Home() {
               <h1 className="text-section">Hello, {userName}</h1>
             </div>
           </div>
-          {/* AI Chatbot Button */}
-          <AIChatBot />
+          {/* AI Chatbot (hidden button, controlled via ref) */}
+          <AIChatBot ref={aiChatRef} showButton={true} />
         </motion.header>
 
         {/* Calorie Ring Widget */}
@@ -274,42 +273,19 @@ export default function Home() {
           <CalorieRing consumed={consumedCalories} goal={calorieGoal} />
         </motion.section>
 
-        {/* Food Database Search */}
+        {/* Unified Search */}
         <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="mb-6"
-        >
-          <FoodSearch onSelect={handleFoodSelect} />
-        </motion.div>
-
-        {/* Recipe Search Bar */}
-        <motion.div
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.15 }}
           className="mb-8"
         >
-          <div className="relative">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Search for recipes..."
-              className="premium-input pl-14 pr-24"
-            />
-            <Button
-              onClick={handleSearch}
-              disabled={isSearching}
-              size="sm"
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-5 rounded-full"
-            >
-              {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
-            </Button>
-          </div>
+          <UnifiedSearch
+            onFoodSelect={handleFoodSelect}
+            onRecipeSearch={handleRecipeSearch}
+            onAIQuestion={handleAIQuestion}
+            isRecipeSearching={isSearching}
+          />
         </motion.div>
 
         {/* Premium Banner */}
