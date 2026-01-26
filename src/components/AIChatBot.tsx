@@ -96,27 +96,24 @@ export const AIChatBot = forwardRef<AIChatBotRef, AIChatBotProps>(({ showButton 
         </motion.button>
       )}
 
-      {/* Chat Modal - Mobile Optimized */}
+      {/* Chat Modal - Full Screen Mobile */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50"
-            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 z-[100] bg-background"
           >
             <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              onClick={(e) => e.stopPropagation()}
-              className="absolute bottom-0 left-0 right-0 bg-background rounded-t-3xl overflow-hidden shadow-2xl"
-              style={{ maxHeight: "85vh", height: "85vh" }}
+              className="h-full flex flex-col"
             >
               {/* Header */}
-              <div className="p-4 border-b border-border flex items-center justify-between bg-background safe-area-top">
+              <div className="p-4 border-b border-border flex items-center justify-between bg-background flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
                     <Bot className="w-5 h-5 text-accent" />
@@ -135,7 +132,7 @@ export const AIChatBot = forwardRef<AIChatBotRef, AIChatBotProps>(({ showButton 
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-secondary/20" style={{ height: "calc(100% - 140px)" }}>
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-secondary/20">
                 {messages.map((msg, i) => (
                   <motion.div
                     key={i}
@@ -176,7 +173,7 @@ export const AIChatBot = forwardRef<AIChatBotRef, AIChatBotProps>(({ showButton 
               </div>
 
               {/* Input - Mobile Optimized */}
-              <div className="p-4 border-t border-border bg-background safe-area-bottom">
+              <div className="p-4 border-t border-border bg-background flex-shrink-0 pb-8">
                 <div className="flex gap-2">
                   <input
                     ref={inputRef}
