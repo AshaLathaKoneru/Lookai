@@ -1,74 +1,29 @@
-import { useState, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { ChevronRight, Loader2, X, Clock, Users, Leaf, Heart } from "lucide-react";
+import { Camera, Plus } from "lucide-react";
 import { MobileNav } from "@/components/MobileNav";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useToast } from "@/hooks/use-toast";
-import { useFavoriteRecipes } from "@/hooks/useFavoriteRecipes";
+import { motion } from "framer-motion";
 import { CalorieRing } from "@/components/CalorieRing";
-import { AIChatBot, AIChatBotRef } from "@/components/AIChatBot";
-import { UnifiedSearch } from "@/components/UnifiedSearch";
-import { FoodItem } from "@/data/foodDatabase";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-interface Recipe {
-  name: string;
-  image: string;
-  calories: number | string;
-  protein: string;
-  carbs: string;
-  fat: string;
-  summary: string;
-}
-
-interface RecipeDetails {
-  name: string;
-  prepTime: string;
-  cookTime: string;
-  servings: number;
-  ingredients: { item: string; amount: string; notes?: string }[];
-  instructions: string[];
-  substitutes: { original: string; substitute: string; notes?: string }[];
-  nutritionTips: string;
-}
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { isFavorite, toggleFavorite } = useFavoriteRecipes();
-  
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [aiRecipes, setAiRecipes] = useState<Recipe[] | null>(null);
-  const [noResults, setNoResults] = useState(false);
-  
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [recipeDetails, setRecipeDetails] = useState<RecipeDetails | null>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [showRecipeModal, setShowRecipeModal] = useState(false);
-  
-  const aiChatRef = useRef<AIChatBotRef>(null);
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      
+
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", user.id)
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -79,7 +34,7 @@ export default function Home() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      
+
       const today = format(new Date(), "yyyy-MM-dd");
       const { data, error } = await supabase
         .from("meals")
@@ -87,7 +42,7 @@ export default function Home() {
         .eq("user_id", user.id)
         .eq("meal_date", today)
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data || [];
     },
@@ -95,156 +50,34 @@ export default function Home() {
 
   const userName = profile?.name || profile?.email?.split("@")[0] || "there";
   const calorieGoal = profile?.calorie_goal || 2000;
-  
-  // Calculate consumed calories from today's meals
+
+  // Calculate consumed calories and macros from today's meals
   const consumedCalories = useMemo(() => {
     return todayMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0);
   }, [todayMeals]);
 
-  const defaultRecipes = [
-    {
-      name: "Mediterranean Quinoa Bowl",
-      calories: 420,
-      protein: "18g",
-      carbs: "52g",
-      fat: "16g",
-      summary: "Healthy grain bowl with fresh vegetables",
-      image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&auto=format&fit=crop",
-    },
-    {
-      name: "Grilled Salmon Salad",
-      calories: 380,
-      protein: "32g",
-      carbs: "12g",
-      fat: "24g",
-      summary: "Omega-3 rich salmon with greens",
-      image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&auto=format&fit=crop",
-    },
-    {
-      name: "Avocado Toast Deluxe",
-      calories: 290,
-      protein: "8g",
-      carbs: "28g",
-      fat: "18g",
-      summary: "Creamy avocado on whole grain bread",
-      image: "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&auto=format&fit=crop",
-    },
-  ];
-
-  const handleRecipeSearch = async (query: string) => {
-    if (!query.trim()) return;
-    
-    setSearchQuery(query);
-    setIsSearching(true);
-    setNoResults(false);
-    setAiRecipes(null);
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-recipe-suggestions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ query }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          toast({ title: "Too many requests", description: "Please wait a moment.", variant: "destructive" });
-        } else if (response.status === 402) {
-          toast({ title: "Credits needed", description: "AI service requires credits.", variant: "destructive" });
-        } else {
-          throw new Error(data.error || "Failed to get recipes");
-        }
-        return;
-      }
-
-      if (data.recipes && data.recipes.length > 0) {
-        setAiRecipes(data.recipes);
-      } else {
-        setNoResults(true);
-      }
-    } catch (error) {
-      console.error("Search error:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to search recipes",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleAIQuestion = (question: string) => {
-    aiChatRef.current?.sendMessage(question);
-  };
-
-  const handleTellMeRecipe = async (recipe: Recipe) => {
-    setSelectedRecipe(recipe);
-    setShowRecipeModal(true);
-    setIsLoadingDetails(true);
-    setRecipeDetails(null);
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-recipe-details`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ recipeName: recipe.name, summary: recipe.summary }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to get recipe details");
-      }
-
-      setRecipeDetails(data);
-    } catch (error) {
-      console.error("Recipe details error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load recipe details",
-        variant: "destructive",
-      });
-      setShowRecipeModal(false);
-    } finally {
-      setIsLoadingDetails(false);
-    }
-  };
-
-  const handleFoodSelect = (food: FoodItem) => {
-    toast({
-      title: food.name,
-      description: `${food.kcalPerGram} kcal/g • ${food.category} • ${food.region}`,
-    });
-  };
-
-  const displayRecipes = aiRecipes || defaultRecipes;
+  const totalMacros = useMemo(() => {
+    return todayMeals.reduce(
+      (acc, meal) => ({
+        protein: acc.protein + (Number(meal.protein) || 0),
+        carbs: acc.carbs + (Number(meal.carbs) || 0),
+        fats: acc.fats + (Number(meal.fats) || 0),
+      }),
+      { protein: 0, carbs: 0, fats: 0 }
+    );
+  }, [todayMeals]);
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="min-h-screen bg-white pb-28">
       <div className="px-5 pt-14 max-w-md mx-auto">
         {/* Header */}
-        <motion.header 
+        <motion.header
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center justify-between mb-6"
+          className="mb-8"
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-2">
             <div className="w-11 h-11 rounded-full bg-secondary overflow-hidden">
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
@@ -255,56 +88,84 @@ export default function Home() {
               )}
             </div>
             <div>
-              <p className="text-caption">Good morning</p>
-              <h1 className="text-section">Hello, {userName}</h1>
+              <p className="text-[13px] text-muted-foreground">Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}</p>
+              <h1 className="text-[20px] font-semibold tracking-tight">Hello, {userName}</h1>
             </div>
           </div>
-          {/* AI Chatbot (hidden button, controlled via ref) */}
-          <AIChatBot ref={aiChatRef} showButton={true} />
         </motion.header>
 
         {/* Calorie Ring Widget */}
         <motion.section
-          initial={{ scale: 0.9, opacity: 0 }}
+          initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.05 }}
-          className="flex justify-center mb-8"
+          className="mb-8"
         >
-          <CalorieRing consumed={consumedCalories} goal={calorieGoal} />
+          <div className="premium-card p-6 flex flex-col items-center">
+            <CalorieRing consumed={consumedCalories} goal={calorieGoal} />
+
+            {/* Macros */}
+            <div className="flex items-center gap-4 mt-6 w-full justify-center">
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-macro-protein" />
+                  <span className="text-[13px] text-muted-foreground">Protein</span>
+                </div>
+                <span className="text-[17px] font-semibold">{Math.round(totalMacros.protein)}g</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-macro-carbs" />
+                  <span className="text-[13px] text-muted-foreground">Carbs</span>
+                </div>
+                <span className="text-[17px] font-semibold">{Math.round(totalMacros.carbs)}g</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-macro-fat" />
+                  <span className="text-[13px] text-muted-foreground">Fats</span>
+                </div>
+                <span className="text-[17px] font-semibold">{Math.round(totalMacros.fats)}g</span>
+              </div>
+            </div>
+          </div>
         </motion.section>
 
-        {/* Unified Search */}
+        {/* Scan CTA */}
         <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}
           className="mb-8"
         >
-          <UnifiedSearch
-            onFoodSelect={handleFoodSelect}
-            onRecipeSearch={handleRecipeSearch}
-            onAIQuestion={handleAIQuestion}
-            isRecipeSearching={isSearching}
-          />
+          <Button
+            onClick={() => navigate("/scan")}
+            className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 text-white font-semibold text-[15px] flex items-center justify-center gap-2 pressable"
+          >
+            <Camera className="w-5 h-5" />
+            Scan Food
+          </Button>
         </motion.div>
 
-        {/* Premium Banner */}
+        {/* Premium Banner (if not premium) */}
         {!profile?.is_premium && (
           <motion.div
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
             className="mb-8"
           >
-            <div 
-              className="premium-card p-5 flex items-center justify-between pressable"
+            <div
+              className="premium-card p-5 bg-gradient-to-br from-accent/5 to-accent/10 pressable"
               onClick={() => navigate("/profile")}
             >
-              <div>
-                <p className="text-section mb-0.5">Unlock Premium</p>
-                <p className="text-caption">Unlimited scans & insights</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[17px] font-semibold mb-0.5">Unlock Premium</p>
+                  <p className="text-[13px] text-muted-foreground">Unlimited scans & insights</p>
+                </div>
+                <div className="text-[22px] font-bold text-accent">₹49</div>
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </div>
           </motion.div>
         )}
@@ -314,250 +175,60 @@ export default function Home() {
           <motion.section
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.25 }}
-            className="mb-8"
+            transition={{ duration: 0.3, delay: 0.2 }}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-section">Today's Meals</h2>
-              <button onClick={() => navigate("/log")} className="text-caption">See all</button>
+              <h2 className="text-[17px] font-semibold">Today's Meals</h2>
+              <button
+                onClick={() => navigate("/log")}
+                className="text-[13px] text-muted-foreground pressable"
+              >
+                See all
+              </button>
             </div>
 
             <div className="space-y-3">
-              {todayMeals.slice(0, 2).map((meal, i) => (
+              {todayMeals.slice(0, 3).map((meal, i) => (
                 <motion.div
                   key={meal.id}
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
-                  className="premium-card p-4 flex items-center gap-4 pressable"
+                  transition={{ duration: 0.3, delay: 0.25 + i * 0.05 }}
+                  className="premium-card p-4 flex items-center gap-4"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-xl overflow-hidden">
+                  <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center overflow-hidden">
                     {meal.image_url ? (
                       <img src={meal.image_url} alt={meal.name} className="w-full h-full object-cover" />
                     ) : (
-                      "🍽️"
+                      <span className="text-2xl">🍽️</span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-[15px] truncate mb-1">{meal.name}</h3>
-                    <div className="flex items-center gap-3">
-                      <span className="macro-badge">
-                        <span className="macro-dot macro-dot-protein" />
-                        {Number(meal.protein).toFixed(0)}g
-                      </span>
-                      <span className="macro-badge">
-                        <span className="macro-dot macro-dot-carbs" />
-                        {Number(meal.carbs).toFixed(0)}g
-                      </span>
-                      <span className="macro-badge">
-                        <span className="macro-dot macro-dot-fat" />
-                        {Number(meal.fats).toFixed(0)}g
-                      </span>
+                    <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
+                      <span>P: {Math.round(Number(meal.protein))}g</span>
+                      <span>C: {Math.round(Number(meal.carbs))}g</span>
+                      <span>F: {Math.round(Number(meal.fats))}g</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-lg text-number">{meal.calories}</span>
-                    <span className="text-caption ml-1">cal</span>
+                    <div className="text-[20px] font-bold tabular-nums">{meal.calories}</div>
+                    <div className="text-[12px] text-muted-foreground">cal</div>
                   </div>
                 </motion.div>
               ))}
             </div>
+
+            {todayMeals.length === 0 && (
+              <div className="premium-card p-8 text-center">
+                <div className="text-4xl mb-3">🍽️</div>
+                <p className="text-[15px] text-muted-foreground">No meals logged today</p>
+                <p className="text-[13px] text-muted-foreground mt-1">Start by scanning your first meal</p>
+              </div>
+            )}
           </motion.section>
         )}
-
-        {/* Recipe Suggestions */}
-        <motion.section
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-section">
-              {aiRecipes ? `Results for "${searchQuery}"` : "Recipe Ideas"}
-            </h2>
-            {aiRecipes && (
-              <button 
-                onClick={() => { setAiRecipes(null); setSearchQuery(""); }}
-                className="text-caption flex items-center gap-1"
-              >
-                <X className="w-3 h-3" />
-                Clear
-              </button>
-            )}
-          </div>
-
-          {isSearching ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="premium-card p-4 flex gap-4">
-                  <div className="skeleton w-24 h-24 rounded-2xl" />
-                  <div className="flex-1 space-y-3 py-1">
-                    <div className="skeleton h-5 w-3/4 rounded-lg" />
-                    <div className="skeleton h-4 w-1/2 rounded-lg" />
-                    <div className="skeleton h-4 w-2/3 rounded-lg" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : noResults ? (
-            <div className="text-center py-16">
-              <p className="text-display mb-2">No recipes found</p>
-              <p className="text-caption">Try a different search term</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <AnimatePresence mode="wait">
-                {displayRecipes.map((recipe, i) => (
-                  <motion.div
-                    key={recipe.name + i}
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -20, opacity: 0 }}
-                    transition={{ duration: 0.3, delay: i * 0.05 }}
-                    className="recipe-card flex gap-4 p-4"
-                  >
-                    <img
-                      src={recipe.image}
-                      alt={recipe.name}
-                      className="w-24 h-24 rounded-2xl object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&auto=format&fit=crop";
-                      }}
-                    />
-                    <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5">
-                      <div>
-                        <h3 className="font-semibold text-[15px] mb-1 line-clamp-1">{recipe.name}</h3>
-                        <p className="text-caption line-clamp-1 mb-2">{recipe.summary}</p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium">{recipe.calories} cal</span>
-                          <span className="macro-badge">P: {recipe.protein}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => handleTellMeRecipe(recipe)}
-                            className="text-sm font-medium text-accent pressable"
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => toggleFavorite(recipe)}
-                            className="p-1.5 pressable"
-                          >
-                            <Heart className={`w-4 h-4 transition-colors ${
-                              isFavorite(recipe.name) ? "text-destructive fill-destructive" : "text-muted-foreground"
-                            }`} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
-        </motion.section>
       </div>
-
-      {/* Recipe Details Modal */}
-      <Dialog open={showRecipeModal} onOpenChange={setShowRecipeModal}>
-        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-display">{selectedRecipe?.name}</DialogTitle>
-          </DialogHeader>
-
-          {isLoadingDetails ? (
-            <div className="space-y-4 py-8">
-              <div className="skeleton h-6 w-2/3 rounded-lg mx-auto" />
-              <div className="skeleton h-4 w-1/2 rounded-lg mx-auto" />
-              <div className="space-y-2 mt-6">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="skeleton h-4 w-full rounded-lg" />
-                ))}
-              </div>
-            </div>
-          ) : recipeDetails ? (
-            <div className="space-y-6">
-              {/* Time & Servings */}
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>{recipeDetails.prepTime} prep</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>{recipeDetails.cookTime} cook</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Users className="w-4 h-4" />
-                  <span>{recipeDetails.servings} servings</span>
-                </div>
-              </div>
-
-              {/* Ingredients */}
-              <div>
-                <h3 className="text-section mb-3">Ingredients</h3>
-                <ul className="space-y-2">
-                  {recipeDetails.ingredients?.map((ing, i) => (
-                    <li key={i} className="flex items-start gap-3 text-body">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent mt-2 shrink-0" />
-                      <span>
-                        <strong>{ing.amount}</strong> {ing.item}
-                        {ing.notes && <span className="text-muted-foreground"> ({ing.notes})</span>}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Instructions */}
-              <div>
-                <h3 className="text-section mb-3">Instructions</h3>
-                <ol className="space-y-4">
-                  {recipeDetails.instructions?.map((step, i) => (
-                    <li key={i} className="flex gap-3 text-body">
-                      <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold shrink-0">
-                        {i + 1}
-                      </span>
-                      <span className="pt-0.5">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-
-              {/* Substitutes */}
-              {recipeDetails.substitutes && recipeDetails.substitutes.length > 0 && (
-                <div>
-                  <h3 className="text-section mb-3 flex items-center gap-2">
-                    <Leaf className="w-4 h-4 text-accent" />
-                    Substitutions
-                  </h3>
-                  <ul className="space-y-2">
-                    {recipeDetails.substitutes.map((sub, i) => (
-                      <li key={i} className="text-body bg-secondary rounded-xl p-3">
-                        <span className="font-medium">{sub.original}</span>
-                        <span className="mx-2 text-muted-foreground">→</span>
-                        <span className="text-accent font-medium">{sub.substitute}</span>
-                        {sub.notes && <p className="text-caption mt-1">{sub.notes}</p>}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Nutrition Tips */}
-              {recipeDetails.nutritionTips && (
-                <div className="bg-accent/10 rounded-xl p-4">
-                  <p className="text-body">
-                    <strong>Tip:</strong> {recipeDetails.nutritionTips}
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
 
       <MobileNav />
     </div>

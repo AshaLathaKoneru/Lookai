@@ -18,13 +18,13 @@ export default function Profile() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      
+
       const { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", user.id)
         .single();
-      
+
       return data;
     },
   });
@@ -34,12 +34,12 @@ export default function Profile() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return 0;
-      
+
       const { count } = await supabase
         .from("meals")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id);
-      
+
       return count || 0;
     },
   });
@@ -84,13 +84,13 @@ export default function Profile() {
     <div className="min-h-screen bg-background pb-28">
       <div className="px-5 pt-14 max-w-md mx-auto">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className="flex items-center justify-between mb-8"
         >
           <h1 className="text-display">Profile</h1>
-          <button 
+          <button
             onClick={() => navigate("/settings")}
             className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center pressable"
           >
@@ -99,7 +99,7 @@ export default function Profile() {
         </motion.div>
 
         {/* Profile Card */}
-        <motion.div 
+        <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.05 }}
@@ -140,7 +140,7 @@ export default function Profile() {
         </motion.div>
 
         {/* Premium Subscription Card */}
-        <motion.div 
+        <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.08 }}
@@ -154,7 +154,7 @@ export default function Profile() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-[15px] text-foreground">Premium Member</h3>
-                  <p className="text-caption">Unlimited scans & features</p>
+                  <p className="text-caption">Unlimited scans & insights</p>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
                   <Check className="w-4 h-4 text-white" />
@@ -162,32 +162,37 @@ export default function Profile() {
               </div>
             </div>
           ) : (
-            <div className="premium-card p-5 overflow-hidden relative">
+            <div className="premium-card p-6 overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent" />
               <div className="relative">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center">
-                    <Crown className="w-6 h-6 text-accent" />
+                  <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center">
+                    <Crown className="w-7 h-7 text-accent" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-[15px] text-foreground">Upgrade to Premium</h3>
-                    <p className="text-caption">Unlock all features</p>
+                    <h3 className="text-[20px] font-semibold mb-1">LooKai Premium</h3>
+                    <p className="text-[13px] text-muted-foreground">Unlock all features</p>
                   </div>
                 </div>
-                
-                <ul className="space-y-2 mb-4">
-                  {["Unlimited food scans", "AI nutrition insights", "Priority support"].map((feature, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="w-4 h-4 rounded-full bg-accent/20 flex items-center justify-center">
-                        <Check className="w-2.5 h-2.5 text-accent" />
+
+                <ul className="space-y-2.5 mb-5">
+                  {["Unlimited food scans", "Weekly insights & trends", "Custom calorie goals"].map((feature, i) => (
+                    <li key={i} className="flex items-center gap-3 text-[14px]">
+                      <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+                        <Check className="w-3 h-3 text-accent" />
                       </div>
-                      {feature}
+                      <span className="text-foreground">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
-                <Button className="w-full h-12 rounded-xl font-semibold">
-                  Subscribe Now
+                <div className="flex items-end gap-3 mb-5">
+                  <div className="text-[32px] font-bold text-foreground leading-none">₹49</div>
+                  <div className="text-[15px] text-muted-foreground mb-1">/month</div>
+                </div>
+
+                <Button className="w-full h-14 rounded-full bg-accent hover:bg-accent/90 text-white font-semibold text-[15px]">
+                  Upgrade to Premium
                 </Button>
               </div>
             </div>
@@ -195,7 +200,7 @@ export default function Profile() {
         </motion.div>
 
         {/* Daily Goal */}
-        <motion.div 
+        <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
@@ -231,7 +236,7 @@ export default function Profile() {
         </motion.div>
 
         {/* Menu Items */}
-        <motion.div 
+        <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.15 }}

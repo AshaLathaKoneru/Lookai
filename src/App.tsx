@@ -17,7 +17,6 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Onboarding from "./pages/Onboarding";
 import Favorites from "./pages/Favorites";
-import MealPlan from "./pages/MealPlan";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -98,7 +97,7 @@ const App = () => {
             {/* Public routes */}
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
-            
+
             {!session ? (
               <>
                 <Route path="/auth" element={<Auth />} />
@@ -119,7 +118,6 @@ const App = () => {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/favorites" element={<Favorites />} />
-                <Route path="/meal-plan" element={<MealPlan />} />
                 <Route path="/onboarding" element={<Navigate to="/" replace />} />
                 <Route path="/auth" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<NotFound />} />

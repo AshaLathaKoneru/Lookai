@@ -30,7 +30,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="p-5 pt-14">
-          <button 
+          <button
             onClick={() => setShowAuthForm(false)}
             className="text-muted-foreground text-sm font-medium"
           >
@@ -41,10 +41,15 @@ export default function Auth() {
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-sm">
             <div className="text-center mb-8">
+              <img
+                src="/lookai-logo.png"
+                alt="LooKai"
+                className="h-12 w-auto mx-auto mb-6"
+              />
               <h1 className="text-display mb-2">Welcome back</h1>
               <p className="text-caption">Sign in to continue</p>
             </div>
-            
+
             <div className="premium-card p-6">
               <SupabaseAuth
                 supabaseClient={supabase}
@@ -95,12 +100,21 @@ export default function Auth() {
 
       {/* Content */}
       <div className="flex-1 flex flex-col px-6 -mt-16 relative z-10">
-        <motion.div 
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
           className="flex-1 flex flex-col"
         >
+          {/* Logo */}
+          <div className="mb-6">
+            <img
+              src="/lookai-logo.png"
+              alt="LooKai"
+              className="h-16 w-auto"
+            />
+          </div>
+
           <div className="mb-8">
             <h1 className="text-[28px] font-bold leading-tight mb-3 tracking-tight">
               Your Personal{" "}
@@ -121,7 +135,7 @@ export default function Auth() {
             >
               Get Started
             </Button>
-            
+
             <button
               onClick={() => setShowAuthForm(true)}
               className="w-full text-center py-3 text-caption"

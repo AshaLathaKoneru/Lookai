@@ -1,13 +1,37 @@
 project_id = "gqyboskrxemybclaexne"
 
+[auth]
+# Enable password requirements
+enable_signup = true
+# Minimum password length
+password_min_length = 8
+# Enable leaked password protection (Have I Been Pwned)
+enable_anonymous_sign_ins = false
+
+# Password strength requirements
+[auth.password_requirements]
+# Require at least one lowercase letter
+lowercase = true
+# Require at least one uppercase letter  
+uppercase = true
+# Require at least one number
+numbers = true
+# Require at least one special character
+symbols = false
+
+# Security settings
+[auth.security]
+# Enable protection against leaked passwords
+leaked_password_protection = true
+
 [functions.analyze-meal]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-recipe-suggestions]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-recipe-details]
-verify_jwt = false
+verify_jwt = true
 
 [functions.nutrition-chat]
-verify_jwt = false
+verify_jwt = true

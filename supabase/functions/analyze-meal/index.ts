@@ -1,9 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Maximum image size: 10MB in base64 (approximately 7.5MB actual image)
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,7 +15,49 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Missing authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify the JWT token with Supabase
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { image } = await req.json();
+
+    // Validate image is provided
+    if (!image || typeof image !== "string") {
+      return new Response(
+        JSON.stringify({ error: "Image is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate image size
+    const imageSize = image.length;
+    if (imageSize > MAX_IMAGE_SIZE) {
+      return new Response(
+        JSON.stringify({ error: "Image too large. Maximum size is 10MB" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -52,7 +98,7 @@ serve(async (req) => {
 
     const data = await response.json();
     let content = data.choices[0].message.content;
-    
+
     // Strip markdown code blocks if present
     content = content.trim();
     if (content.startsWith('```')) {
@@ -62,9 +108,9 @@ serve(async (req) => {
       content = content.replace(/\n```$/, '');
       content = content.trim();
     }
-    
+
     console.log("Cleaned AI response:", content);
-    
+
     const parsed = JSON.parse(content);
 
     return new Response(JSON.stringify(parsed), {

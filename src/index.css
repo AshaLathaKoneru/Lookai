@@ -12,61 +12,76 @@
 
 @layer base {
   :root {
-    /* Pure white canvas */
+    /* Pure white canvas - Apple Health Style */
     --background: 0 0% 100%;
+    /* #FFFFFF */
     --foreground: 0 0% 4%;
+    /* #0A0A0A */
 
     /* Card surfaces with subtle border */
     --card: 0 0% 100%;
+    /* #FFFFFF */
     --card-foreground: 0 0% 4%;
+    /* #0A0A0A */
 
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 4%;
 
     /* Primary: Deep charcoal for buttons */
-    --primary: 0 0% 9%;
+    --primary: 0 0% 4%;
+    /* #0A0A0A */
     --primary-foreground: 0 0% 100%;
+    /* #FFFFFF */
 
-    /* Secondary: Soft neutral beige */
-    --secondary: 40 20% 96%;
-    --secondary-foreground: 0 0% 9%;
+    /* Secondary: Soft neutral */
+    --secondary: 0 0% 96%;
+    /* #F5F5F5 */
+    --secondary-foreground: 0 0% 4%;
 
     /* Muted: Light neutral */
-    --muted: 40 10% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 63%;
+    /* #A0A0A0 */
 
-    /* Accent: Positive nutrition green */
+    /* Accent: Health green #1BC47D */
     --accent: 152 69% 42%;
+    /* #1BC47D */
     --accent-foreground: 0 0% 100%;
 
-    /* Error/Destructive */
-    --destructive: 4 78% 56%;
+    /* Error/Destructive #EB5757 */
+    --destructive: 0 72% 63%;
+    /* #EB5757 */
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders: Ultra subtle */
+    /* Borders: #E5E5E5 - Ultra subtle */
     --border: 0 0% 90%;
+    /* #E5E5E5 */
     --input: 0 0% 90%;
     --ring: 0 0% 9%;
 
     /* Status colors */
     --success: 152 69% 42%;
+    /* #1BC47D */
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
 
-    /* Macro colors - refined */
+    /* Macro colors - refined and distinct */
     --macro-carbs: 152 69% 42%;
+    /* Green #1BC47D */
     --macro-protein: 217 91% 60%;
+    /* Blue */
     --macro-fat: 38 92% 50%;
+    /* Orange */
 
-    /* Consistent rounded corners */
-    --radius: 1.25rem;
+    /* Rounded corners - 24px */
+    --radius: 1.5rem;
 
     /* Sidebar (keeping for compatibility) */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 0 0% 4%;
     --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 20% 96%;
+    --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 9%;
     --sidebar-border: 0 0% 90%;
     --sidebar-ring: 0 0% 9%;
@@ -100,7 +115,7 @@
     --border: 0 0% 15%;
     --input: 0 0% 15%;
     --ring: 152 69% 45%;
-    
+
     --success: 152 69% 45%;
     --warning: 38 92% 50%;
     --info: 199 89% 55%;
@@ -132,7 +147,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: "Inter", ui-sans-serif, system-ui;
     letter-spacing: -0.025em;
   }
@@ -141,7 +161,7 @@
   ::-webkit-scrollbar {
     display: none;
   }
-  
+
   * {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -149,36 +169,29 @@
 }
 
 @layer components {
-  /* Premium card with subtle border and shadow */
+
+  /* Premium card with subtle border and shadow - 24px radius */
   .premium-card {
-    @apply bg-card rounded-[20px] border border-border;
-    box-shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.03);
+    @apply bg-card rounded-[24px] border border-border;
+    box-shadow: 0 1px 2px 0 hsl(0 0% 0% / 0.04);
   }
 
-  /* Premium pill button */
+  /* Premium pill button - 14px height, full width */
   .pill-button {
-    @apply h-12 px-6 rounded-full font-semibold text-sm transition-all;
+    @apply w-full h-14 px-6 rounded-full font-semibold text-[15px] transition-all;
   }
 
   .pill-button-primary {
-    @apply pill-button bg-primary text-primary-foreground;
+    @apply pill-button bg-primary text-primary-foreground hover:bg-primary/90;
   }
 
   .pill-button-outline {
-    @apply pill-button bg-transparent border border-border text-foreground;
+    @apply pill-button bg-transparent border border-border text-foreground hover:bg-secondary;
   }
 
-  /* Category chip - minimal and clean */
-  .category-chip {
-    @apply flex items-center gap-2 px-4 py-2.5 rounded-full bg-secondary text-foreground text-sm font-medium transition-all;
-  }
-
-  .category-chip:hover {
-    @apply bg-secondary/80;
-  }
-
-  .category-chip-active {
-    @apply bg-primary text-primary-foreground;
+  /* Macro pill - clean and minimal */
+  .macro-pill {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-foreground text-[13px] font-medium;
   }
 
   /* Macro badge - subtle pill style */
@@ -215,12 +228,10 @@
   /* Skeleton shimmer loading */
   .skeleton {
     @apply bg-secondary rounded-xl;
-    background: linear-gradient(
-      90deg,
-      hsl(var(--secondary)) 0%,
-      hsl(0 0% 95%) 50%,
-      hsl(var(--secondary)) 100%
-    );
+    background: linear-gradient(90deg,
+        hsl(var(--secondary)) 0%,
+        hsl(0 0% 95%) 50%,
+        hsl(var(--secondary)) 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }
@@ -263,6 +274,7 @@
 }
 
 @layer utilities {
+
   /* Micro-interaction: press effect */
   .pressable {
     @apply transition-transform duration-100 active:scale-[0.95];
@@ -295,6 +307,7 @@
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }

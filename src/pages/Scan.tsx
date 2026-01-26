@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Image as ImageIcon, Camera, RefreshCw } from "lucide-react";
+import { X, Image as ImageIcon, Camera, RefreshCw, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Scan() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -15,6 +16,7 @@ export default function Scan() {
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -62,7 +64,7 @@ export default function Scan() {
   const bonusScans = profile?.bonus_scans || 0;
   const dailyScansUsed = todayUsage?.scan_count || 0;
   const dailyLimit = 5;
-  
+
   // Premium users: unlimited, otherwise check daily limit + bonus scans
   const canScan = profile?.is_premium || dailyScansUsed < dailyLimit || bonusScans > 0;
   const scansLeft = useMemo(() => {
@@ -75,7 +77,7 @@ export default function Scan() {
     try {
       setCameraError(null);
       setCameraActive(false);
-      
+
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
@@ -95,7 +97,7 @@ export default function Scan() {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        
+
         videoRef.current.onloadedmetadata = () => {
           videoRef.current?.play().then(() => {
             setCameraActive(true);
@@ -128,25 +130,25 @@ export default function Scan() {
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    
+
     ctx.drawImage(video, 0, 0);
-    
+
     const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
     setPreview(dataUrl);
-    
+
     canvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], "captured-meal.jpg", { type: "image/jpeg" });
         setSelectedImage(file);
       }
     }, "image/jpeg", 0.9);
-    
+
     stopCamera();
   }, [stopCamera]);
 
@@ -158,7 +160,7 @@ export default function Scan() {
     if (activeTab === "scan" && !preview && canScan) {
       startCamera();
     }
-    
+
     return () => {
       stopCamera();
     };
@@ -292,7 +294,7 @@ export default function Scan() {
         /* Live Camera View */
         <div className="flex-1 flex flex-col relative bg-foreground">
           {/* Header */}
-          <motion.div 
+          <motion.div
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 pt-14"
@@ -319,7 +321,7 @@ export default function Scan() {
               playsInline
               muted
               className="absolute inset-0 w-full h-full object-cover"
-              style={{ 
+              style={{
                 transform: facingMode === "user" ? "scaleX(-1)" : "none",
                 backgroundColor: "hsl(var(--foreground))"
               }}
@@ -340,7 +342,7 @@ export default function Scan() {
             )}
 
             {/* Focus frame */}
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.4 }}
@@ -368,7 +370,7 @@ export default function Scan() {
           </div>
 
           {/* Bottom controls */}
-          <motion.div 
+          <motion.div
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4 }}
@@ -432,7 +434,7 @@ export default function Scan() {
         /* Preview View */
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <motion.div 
+          <motion.div
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="px-5 pt-14 pb-4 flex items-center justify-between"
@@ -480,7 +482,7 @@ export default function Scan() {
           )}
 
           {/* Bottom buttons */}
-          <motion.div 
+          <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="p-5 pb-10"
@@ -504,6 +506,60 @@ export default function Scan() {
           </motion.div>
         </div>
       )}
+
+      {/* Premium Upgrade Dialog */}
+      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <DialogContent className="max-w-sm rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="sr-only">Upgrade to Premium</DialogTitle>
+          </DialogHeader>
+
+          <div className="text-center py-6">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+              <Crown className="w-8 h-8 text-accent" />
+            </div>
+
+            <h3 className="text-[22px] font-semibold mb-2">Out of Scans</h3>
+            <p className="text-[14px] text-muted-foreground mb-6">
+              You've used all your free scans for today. Upgrade to Premium for unlimited scans!
+            </p>
+
+            <div className="bg-secondary/50 rounded-2xl p-4 mb-6">
+              <div className="flex items-end justify-center gap-2 mb-4">
+                <span className="text-[36px] font-bold leading-none">₹49</span>
+                <span className="text-[16px] text-muted-foreground mb-1">/month</span>
+              </div>
+
+              <ul className="space-y-2 text-left">
+                {["Unlimited food scans", "Weekly insights & trends", "Custom calorie goals"].map((feature, i) => (
+                  <li key={i} className="flex items-center gap-2 text-[13px]">
+                    <div className="w-4 h-4 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+                      <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    </div>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowUpgradeDialog(false)}
+                className="flex-1 h-12 rounded-full"
+              >
+                Not Now
+              </Button>
+              <Button
+                onClick={() => navigate("/profile")}
+                className="flex-1 h-12 rounded-full bg-accent hover:bg-accent/90"
+              >
+                Upgrade
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
