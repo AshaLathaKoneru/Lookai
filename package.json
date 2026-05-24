@@ -1,7 +1,12 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "lookai",
   "private": true,
   "version": "0.0.0",
+  "author": "AshaLathaKoneru (https://github.com/AshaLathaKoneru)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AshaLathaKoneru/Lookai.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
